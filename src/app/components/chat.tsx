@@ -37,18 +37,13 @@ export function Chat() {
     const fileInputRef = useRef<HTMLInputElement>(null)
     const handleRemoveFile = () => {
       setShowUpload(false);
-      setUploadedContent("");
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
     }
-    const handleFileUpload = (file: File,content: string) => {
+    const handleFileUpload = (content: string) => {
         console.log('File content uploaded:', content);
         setShowUpload(false);
-        setUploadedFile({
-          name: file.name,
-          size: file.size
-      });
         setUploadedContent(content);
     };
 
@@ -57,6 +52,7 @@ export function Chat() {
         const enhancedInput = `${input} ${uploadedContent}`;
         handleSubmit(e as React.FormEvent<HTMLFormElement & { input: HTMLInputElement }> & { input: { value: string } });
     };
+    
 
 
     return (
@@ -164,26 +160,35 @@ export function Chat() {
                         </div>
                     </div>
                 </form>
-                {showUpload && 
-                <div className="absolute inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-                    <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-6 rounded-lg shadow-lg w-96">
-                        <div className="mb-4 text-center">
-                            <h2 className="text-xl font-semibold text-white">Upload Your PDF Here</h2>
-                        </div>
-                        <div className="bg-white p-4 rounded-lg shadow-inner">
+                {/* {showUpload && 
+                    <div className="absolute inset-0 bg-black bg-opacity-50 flex justify-center items-center">
+                        <div className="bg-white p-4 rounded">
                             <UploadFile onFileUpload={handleFileUpload} />
-                        </div>
-                        <div className="mt-4 flex justify-end">
-                            <button 
-                                className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-                                onClick={() => setShowUpload(false)}
-                            >
-                                Close
-                            </button>
+                            <Button onClick={() => setShowUpload(false)}>Close</Button> 
                         </div>
                     </div>
-                </div>
-            }
+                } */}
+                {showUpload && 
+    <div className="absolute inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+        <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-6 rounded-lg shadow-lg w-96">
+            <div className="mb-4 text-center">
+                <h2 className="text-xl font-semibold text-white">Upload Your PDF Here</h2>
+            </div>
+            <div className="bg-white p-4 rounded-lg shadow-inner">
+                <UploadFile onFileUpload={handleFileUpload} />
+            </div>
+            <div className="mt-4 flex justify-end">
+                <button 
+                    className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                    onClick={() => setShowUpload(false)}
+                >
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
             </footer>
         </main>
     );
