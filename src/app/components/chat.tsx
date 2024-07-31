@@ -1,4 +1,3 @@
-
 "use client";
 import { ModeToggle } from "@/components/dark-mode-toggle";
 import { Input } from "@/components/ui/input";
@@ -34,13 +33,14 @@ export function Chat() {
             domNode.scrollTop = domNode.scrollHeight;
         }
     });
-    const fileInputRef = useRef<HTMLInputElement>(null)
+    const fileInputRef = useRef<HTMLInputElement>(null);
     const handleRemoveFile = () => {
       setShowUpload(false);
+      setUploadedContent("");
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
-    }
+    };
     const handleFileUpload = (content: string) => {
         console.log('File content uploaded:', content);
         setShowUpload(false);
