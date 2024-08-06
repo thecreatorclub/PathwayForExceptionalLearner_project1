@@ -9,7 +9,8 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@clerk/nextjs": "^5.2.4",
+    "@clerk/clerk-js": "^5.13.0",
+    "@clerk/nextjs": "^5.2.13",
     "@fortawesome/free-solid-svg-icons": "^6.6.0",
     "@fortawesome/react-fontawesome": "^0.2.2",
     "@langchain/openai": "^0.2.4",
@@ -18,9 +19,10 @@
     "@radix-ui/react-slot": "^1.1.0",
     "ai": "^3.2.32",
     "class-variance-authority": "^0.7.0",
+    "clerk": "^0.8.3",
     "clsx": "^2.1.1",
     "lucide-react": "^0.412.0",
-    "next": "14.2.5",
+    "next": "^14.2.5",
     "next-themes": "^0.3.0",
     "react": "^18",
     "react-dom": "^18",
