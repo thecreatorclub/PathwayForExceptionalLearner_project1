@@ -3,25 +3,25 @@ import { ModeToggle } from "@/components/dark-mode-toggle";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPaperclip, faTimesCircle,faFileAlt } from '@fortawesome/free-solid-svg-icons';
+import { faPaperclip, faTimesCircle, faFileAlt } from '@fortawesome/free-solid-svg-icons';
 import { useChat } from "ai/react";
 import { useRef, useEffect, useState } from 'react';
 import UploadFile from "../api/upload/uploadfile";
 import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs";
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import {Prism as SyntaxHighlighter} from 'react-syntax-highlighter'
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { vscDarkPlus as dark } from 'react-syntax-highlighter/dist/esm/styles/prism'
 
 export function Chat() {
-  const [uploadedContent, setUploadedContent] = useState<string>("");
+    const [uploadedContent, setUploadedContent] = useState<string>("");
     const { messages, input, handleInputChange, handleSubmit } = useChat({
         api: 'api/chat',
         onError: (e) => {
             console.log(e)
         },
         body: {
-          fileData: uploadedContent
+            fileData: uploadedContent
         },
     });
     const chatParent = useRef<HTMLUListElement>(null);
@@ -35,11 +35,11 @@ export function Chat() {
     });
     const fileInputRef = useRef<HTMLInputElement>(null);
     const handleRemoveFile = () => {
-      setShowUpload(false);
-      setUploadedContent("");
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
+        setShowUpload(false);
+        setUploadedContent("");
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
     };
     const handleFileUpload = (content: string) => {
         console.log('File content uploaded:', content);
@@ -52,7 +52,7 @@ export function Chat() {
         const enhancedInput = `${input} ${uploadedContent}`;
         handleSubmit(e as React.FormEvent<HTMLFormElement & { input: HTMLInputElement }> & { input: { value: string } });
     };
-    
+
 
 
     return (
@@ -66,7 +66,7 @@ export function Chat() {
                             <UserButton />
                         </SignedIn>
                         <SignedOut>
-                            <SignInButton/>
+                            <SignInButton />
                         </SignedOut>
                     </div>
                 </div>
@@ -95,27 +95,27 @@ export function Chat() {
                                     <div className="rounded-xl p-4 bg-background shadow-md flex ">
                                         {/* <p className="text-primary" dangerouslySetInnerHTML={{ __html: marked(m.content)}} /> */}
                                         <p className="text-primary prose dark:prose-invert"><Markdown remarkPlugins={[remarkGfm]}
-                                        components={{
-                                          code(props) {
-                                            const {children, className, node, ...rest} = props
-                                            const match = /language-(\w+)/.exec(className || '')
-                                            return match ? (
-                                              <SyntaxHighlighter
-                                                // {...rest}
-                                                PreTag="div"
-                                                children={String(children).replace(/\n$/, '')}
-                                                language={match[1]}
-                                                style={dark}
-                                                wrapLines={true}
-                                                wrapLongLines={true}
-                                              />
-                                            ) : (
-                                              <code {...rest} className={className}>
-                                                {children}
-                                              </code>
-                                            )
-                                          },
-                                        }}>{m.content}</Markdown></p>
+                                            components={{
+                                                code(props) {
+                                                    const { children, className, node, ...rest } = props
+                                                    const match = /language-(\w+)/.exec(className || '')
+                                                    return match ? (
+                                                        <SyntaxHighlighter
+                                                            // {...rest}
+                                                            PreTag="div"
+                                                            children={String(children).replace(/\n$/, '')}
+                                                            language={match[1]}
+                                                            style={dark}
+                                                            wrapLines={true}
+                                                            wrapLongLines={true}
+                                                        />
+                                                    ) : (
+                                                        <code {...rest} className={className}>
+                                                            {children}
+                                                        </code>
+                                                    )
+                                                },
+                                            }}>{m.content}</Markdown></p>
                                     </div>
                                 </li>
                             )}
@@ -126,24 +126,24 @@ export function Chat() {
 
             <footer className="mt-auto p-4 border-t-2">
                 <form className="flex flex-col space-y-2" onSubmit={enhancedHandleSubmit}>
-                      {uploadedContent && (
-                      <div className="bg-secondary text-secondary-foreground p-2 rounded-md flex items-center justify-between mb-2 max-w-xs">
-                        <div className="flex items-center space-x-3">
-                          <div className="bg-primary text-primary-foreground rounded-md p-2">
-                            <FontAwesomeIcon icon={faFileAlt} className="h-5 w-4" />
-                          </div>
-                          <p className="text-primary">{uploadedContent.slice(0, 100)}...</p>
+                    {uploadedContent && (
+                        <div className="bg-secondary text-secondary-foreground p-2 rounded-md flex items-center justify-between mb-2 max-w-xs">
+                            <div className="flex items-center space-x-3">
+                                <div className="bg-primary text-primary-foreground rounded-md p-2">
+                                    <FontAwesomeIcon icon={faFileAlt} className="h-5 w-4" />
+                                </div>
+                                <p className="text-primary">{uploadedContent.slice(0, 100)}...</p>
+                            </div>
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={handleRemoveFile}
+                                className="text-gray-400 hover:text-white"
+                            >
+                                <FontAwesomeIcon icon={faTimesCircle} className="h-4 w-4" />
+                            </Button>
                         </div>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={handleRemoveFile}
-                          className="text-gray-400 hover:text-white"
-                        >
-                          <FontAwesomeIcon icon={faTimesCircle} className="h-4 w-4" />
-                        </Button>
-                      </div>
                     )}
                     <div className="relative">
                         <Input type="text"
@@ -168,26 +168,26 @@ export function Chat() {
                         </div>
                     </div>
                 } */}
-                {showUpload && 
-    <div className="absolute inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-        <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-6 rounded-lg shadow-lg w-96">
-            <div className="mb-4 text-center">
-                <h2 className="text-xl font-semibold text-white">Upload Your PDF Here</h2>
-            </div>
-            <div className="bg-white p-4 rounded-lg shadow-inner">
-                <UploadFile onFileUpload={handleFileUpload} />
-            </div>
-            <div className="mt-4 flex justify-end">
-                <button 
-                    className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-                    onClick={() => setShowUpload(false)}
-                >
-                    Close
-                </button>
-            </div>
-        </div>
-    </div>
-}
+                {showUpload &&
+                    <div className="absolute inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+                        <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-6 rounded-lg shadow-lg w-96">
+                            <div className="mb-4 text-center">
+                                <h2 className="text-xl font-semibold text-white">Upload Your PDF Here</h2>
+                            </div>
+                            <div className="bg-white p-4 rounded-lg shadow-inner">
+                                <UploadFile onFileUpload={handleFileUpload} />
+                            </div>
+                            <div className="mt-4 flex justify-end">
+                                <button
+                                    className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                                    onClick={() => setShowUpload(false)}
+                                >
+                                    Close
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                }
 
             </footer>
         </main>
