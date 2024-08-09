@@ -1,55 +1,41 @@
-
+import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
-import { OpenAIStream, StreamingTextResponse } from 'ai';
-
-export const dynamic = 'force-dynamic'
 
 const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY!,
+  apiKey: process.env.OPENAI_API_KEY,
 });
 
-export async function POST(req: Request) {
-    // Extract the `messages` from the body of the request
-    const { messages, fileData } = await req.json();
-    const currentMessageContent = messages[messages.length-1].content;
+export async function POST(request: NextRequest) {
+  try {
+    const { learningOutcome, markingCriteria, studentWriting } = await request.json();
 
-    let TEMPlATE;
-    
+    const prompt = `
+      Learning Outcome: ${learningOutcome}
+      Marking Criteria: ${markingCriteria}
+      Student Writing: ${studentWriting}
+      
+      Provide detailed feedback based on the above information.
+    `;
 
-    if (fileData) {
-        TEMPlATE = `
-        Using the context provided, answer the question.
-        Context: ${JSON.stringify(fileData)}
-        Question: ${JSON.stringify(currentMessageContent)}
-        `;
-    } else {
-        TEMPlATE = currentMessageContent;
-    }
-
-    messages[messages.length-1].content = TEMPlATE;
-    // Request the OpenAI API for the response based on the prompt
     const response = await openai.chat.completions.create({
-        model: 'gpt-4o',
-        temperature: 1.0,
-        stream: true,
-        messages:[
-            {
-                role: 'system', 
-                content: `You are a knowledgeable and professional high school teacher. You will provide detailed feedback and advice to Year 11 and Year 12 students on their draft essays or assignments.
+      model: 'gpt-4o',
+      messages: [
+        { role: 'system', content: `You are a professional high school teacher. You will provide detailed feedback and advice to Year 11 and Year 12 students on their draft essays or assignments.
                         Start by acknowledging the effort put into the draft and highlight a positive aspect of the essay.
-                        List all the spelling and grammar errors found in the text in a table format so student can easily saw the errors and outcomes after being corrected.
-                        Check that referencing is provided in a consistent format and ensure that the referencing choices include in-text references.
-                        Provide feedback on the structure and flow of the essay.
-                        Offer any advice on how to improve the essay or assignment before final submission.
-                        No yapping, just get to the point.`, 
-            },
-
-        ...messages] ,
+                        Based on the {$learningOutcome} and {$markingCriteria}, provide feedback on the structure and flow of the {$studentWriting}.
+                        Offer any advice on how to improve the essay or assignment before final submission. Put the response together in two paragraph 
+                        first paragraph should where the student made mistakes and where he could improve and second paragraph should be what the student could do to improve` },
+        { role: 'user', content: prompt },
+      ],
+      temperature: 0.7,
+      max_tokens: 1000,
     });
-    console.log(response);
-    // Convert the response into a friendly text-stream
-    const stream = OpenAIStream(response);
 
-    // Respond with the stream
-    return new StreamingTextResponse(stream);
+    const feedback = response.choices[0]?.message?.content || 'No feedback received.';
+
+    return NextResponse.json({ message: feedback });
+  } catch (error) {
+    console.error('Error:', error);
+    return NextResponse.json({ message: 'An error occurred' }, { status: 500 });
+  }
 }
