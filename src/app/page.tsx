@@ -1,80 +1,49 @@
 "use client";
+import { ModeToggle } from "@/components/dark-mode-toggle";
+import React, { useEffect, useState } from 'react';
+import './globals.css';
+import Image from 'next/image';
+import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs";
+import logo from './logofromfigma.png';
+import Link from 'next/link';
 
-import React, { useState } from 'react';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import './globals.css'; // Import the CSS file
+const Page: React.FC = () => {
+  const [isClient, setIsClient] = useState(false);
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
-const Page = () => {
-  const [learningOutcome, setLearningOutcome] = useState('');
-  const [markingCriteria, setMarkingCriteria] = useState('');
-  const [studentWriting, setStudentWriting] = useState('');
-  const [feedback, setFeedback] = useState('');
-  const [loading, setLoading] = useState(false);
-
-  const handleSubmit = async () => {
-    setLoading(true);
-    setFeedback('');
-    const response = await fetch('/api/chat', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        learningOutcome,
-        markingCriteria,
-        studentWriting,
-      }),
-    });
-
-    if (response.ok) {
-      const data = await response.json();
-      setFeedback(data.message || 'No feedback received.');
-    } else {
-      setFeedback('Error: Unable to get feedback.');
-    }
-    setLoading(false);
-  };
+  if (!isClient) {
+    return null;
+  }
 
   return (
-    <div className="container">
-      <div className="row">
-        <div className="column">
-          <h2>Learning Outcome</h2>
-          <textarea
-            value={learningOutcome}
-            onChange={(e) => setLearningOutcome(e.target.value)}
-            rows="10"
-          />
+    <div className="page-container">
+      <header className="header">
+        <div className="logo-container">
+          <Image src={logo} alt="Logo" className="logo" width={100} height={100} />
+          <span className="logo-text">&quot;We are Learners&quot;</span>
         </div>
-
-        <div className="column">
-          <h2>Marking Criteria</h2>
-          <textarea
-            value={markingCriteria}
-            onChange={(e) => setMarkingCriteria(e.target.value)}
-            rows="10"
-          />
+        <div className="button-group">
+          <ModeToggle />
+          <SignedIn>
+            <UserButton />
+          </SignedIn>
+          <SignedOut>
+            <SignInButton/>
+          </SignedOut>
         </div>
-
-        <div className="column">
-          <h2>Student Writing</h2>
-          <textarea
-            value={studentWriting}
-            onChange={(e) => setStudentWriting(e.target.value)}
-            rows="10"
-          />
-        </div>
-      </div>
-
-      <div className="button-container">
-        <button onClick={handleSubmit}>Get Feedback</button>
-      </div>
-
-      <div className="markdown-body">
-        {loading && <div className="loading">Generating feedback...</div>}
-        <ReactMarkdown remarkPlugins={[remarkGfm]}>{feedback}</ReactMarkdown>
-      </div>
+      </header>
+      <section className="intro-container">
+        <h1 className="intro-page-head">Empower your assignment with AI</h1>
+        <p className="intro-page-para-head">
+          Our AI Assistant helps high school students excel in their studies by providing
+          personalized feedback, expert advice, and secure document storage.
+        </p>
+        <Link href={'/chat'}>
+          <button className="intro-page-button">Get Started</button>
+        </Link>
+      </section>
     </div>
   );
 };
