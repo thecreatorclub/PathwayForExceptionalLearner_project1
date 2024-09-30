@@ -68,6 +68,10 @@
   }
 }
 
+body {
+  height: 100vh;
+  background-color: #FAEBD7;
+}
 .intro-container {
   display: flex;
   flex-direction: column;
@@ -144,15 +148,6 @@ button {
 
 button:hover {
   background-color: #f0f0f0;
-}
-
-.markdown-body {
-  width: 80%;
-  margin-top: 20px;
-  border: 1px solid #080606;
-
-  padding: 20px;
-  border-radius: 8px;
 }
 
 .loading {
@@ -333,13 +328,20 @@ button:hover {
 
 .open-sidenav-button,
 .close-sidenav-button {
-  position: absolute;
-  top: 100px;
-  left: 20px;
   border: none;
   padding: 10px;
   cursor: pointer;
   font-size: 18px;
+}
+
+.open-sidenav-button {
+  position: relative;
+}
+
+.close-sidenav-button {
+  position: absolute;
+  top: 20px;
+  left: 20px;
 }
 .hamburger-icon {
   display: flex;
@@ -369,12 +371,11 @@ button:hover {
 
 main {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  align-items: start;
+  justify-content: space-between;
   width: 100%;
-  height: 100vh;
 }
+
 
 
 .column-container {
@@ -399,14 +400,6 @@ main {
   border-radius: 8px;
 }
 
-.vertical-line{
-  height: 100%;
-  width: 1;
-  left-margin: 50%;
-  background-color: #000;
-}
-
-
 textarea {
   width: 100%;
   resize: none;
@@ -416,7 +409,30 @@ textarea {
   box-sizing: border-box;
 }
 
+textarea#student-writing {
+  height: 555px;
+}
+
+
+.markdown-body {
+  width: 100%;
+  border: 1px solid #080606;
+  padding: 20px;
+  border-radius: 8px;
+}
+
 .button-container {
   margin-top: 20px;
   text-align: right;
+}
+
+.highlight-button {
+  background-color: yellow;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.tippy-box[data-theme~='black-and-white'] {
+  background-color: white;
+  color: black;
 }
