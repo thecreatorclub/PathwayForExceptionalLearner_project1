@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
-import OpenAI from 'openai';
+import { NextRequest, NextResponse } from "next/server";
+import OpenAI from "openai"; // replce with AI
+// replace with this - https://sdk.vercel.ai/docs/getting-started/nextjs-app-router
 
 // Initialize OpenAI client using the API key from environment variables
 const openai = new OpenAI({
@@ -10,7 +11,8 @@ const openai = new OpenAI({
 export async function POST(request: NextRequest) {
   try {
     // Parse the incoming request body to extract relevant fields
-    const { learningOutcome, markingCriteria, studentWriting } = await request.json();
+    const { learningOutcome, markingCriteria, studentWriting } =
+      await request.json();
 
     // Create a detailed prompt that includes specific instructions for the AI
     // to generate feedback based on the learning outcome, marking criteria, and student writing.
@@ -26,10 +28,10 @@ export async function POST(request: NextRequest) {
     // This request includes a complex set of instructions (system message) for the AI to follow,
     // ensuring that the feedback is detailed, actionable, and well-structured.
     const response = await openai.chat.completions.create({
-      model: 'gpt-4o',  // Use the GPT-4 model optimized for chat completions.
+      model: "gpt-4o", // Use the GPT-4 model optimized for chat completions.
       messages: [
         {
-          role: 'system',
+          role: "system",
           content: `
             Before providing any feedback, first check if the student's writing is less than or equal to 250 words. 
             If it is, let the student know that the text is too short. 
@@ -59,19 +61,20 @@ export async function POST(request: NextRequest) {
             making it clear how the work measures up against the expectations.
           `,
         },
-        { role: 'user', content: prompt },
+        { role: "user", content: prompt },
       ],
-      temperature: 0.4,  // Set temperature to 0.4 to keep the responses focused and less random.
-      max_tokens: 1000,   // Set maximum tokens to ensure the response does not exceed limits.
+      temperature: 0.4, // Set temperature to 0.4 to keep the responses focused and less random.
+      max_tokens: 1000, // Set maximum tokens to ensure the response does not exceed limits.
     });
 
     // Extract the generated feedback from the response
-    const feedback = response.choices[0]?.message?.content || 'No feedback received.';
+    const feedback =
+      response.choices[0]?.message?.content || "No feedback received.";
 
     // Return the feedback as a JSON response
     return NextResponse.json({ message: feedback });
   } catch (error) {
-    console.error('Error:', error);  // Log any errors to the console
-    return NextResponse.json({ message: 'An error occurred' }, { status: 500 });
+    console.error("Error:", error); // Log any errors to the console
+    return NextResponse.json({ message: "An error occurred" }, { status: 500 });
   }
 }
