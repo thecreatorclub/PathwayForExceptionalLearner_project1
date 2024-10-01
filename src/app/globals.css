@@ -4,7 +4,7 @@
 @tailwind utilities;
 @import url('https://fonts.googleapis.com/css2?family=Italianno&display=swap');
 
-@layer base {
+ @layer base {
   :root {
     --background: 0 0% 100%;
     --foreground: 240 10% 3.9%;
@@ -334,8 +334,19 @@ button:hover {
   font-size: 18px;
 }
 
+.open-sidenav-button-container {
+  position: relative; /* Keep it positioned relative to the page */
+  padding: 10px;
+}
+
 .open-sidenav-button {
-  position: relative;
+  background-color: #f2f5f8;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  cursor: pointer;
+  margin-right: 1400px;
+
 }
 
 .close-sidenav-button {
@@ -421,10 +432,70 @@ textarea#student-writing {
   border-radius: 8px;
 }
 
-.button-container {
-  margin-top: 20px;
-  text-align: right;
+/* Define a general container styling to manage overflow and height */
+.page-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh; /* Full viewport height */
+  overflow-y: auto; /* Enables scrolling for the entire page */
 }
+
+.outer-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto; /* Adds vertical scrolling */
+}
+
+.left-panel, .right-panel, .top-section, .button-panel {
+  height: auto;
+  overflow: visible;
+}
+
+.top-section, .button-panel {
+  flex: 1;
+}
+
+/* Ensures the left and right panels wrap properly and show all content */
+.left-panel, .right-panel {
+  display: flex;
+  flex-direction: column;
+  overflow: auto; /* Adds scrollbars if the content overflows */
+  height: 100%;
+  max-height: 100%; /* Ensure the panels don't exceed available space */
+}
+
+/* Scrollable content styling */
+.student-writing-box, .textarea {
+  height: 100%; /* Allow it to expand fully */
+  overflow-y: auto; /* Adds vertical scrolling to the content */
+  resize: none; /* Disable resizing to use scrollbars instead */
+}
+
+
+.resizable-group, .vertical-group {
+  display: flex;
+  flex: 1;
+}
+
+.left-panel, .right-panel {
+  padding: 10px;
+  border: 1px solid #ddd;
+}
+
+.student-writing-box {
+  min-height: 1000px;
+  border: 1px solid #ccc;
+  padding: 20px;
+}
+
+.button-container {
+  padding: 20px;
+  text-align: center;
+  border-top: 1px solid #ccc;
+  margin-top: 10px;
+}
+
 
 .highlight-button {
   background-color: yellow;
