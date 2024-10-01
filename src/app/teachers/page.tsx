@@ -1,11 +1,9 @@
 "use client";
 import { ModeToggle } from "@/components/dark-mode-toggle";
 import '../globals.css';
-import Image from 'next/image';
-import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs";
+import Link from "next/link";
+//import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs";
 import React, { useState } from 'react'; 
-import logo from '../logofromfigma.png';
-import Link from 'next/link';  // Import Link from next/link
 
 const Page1: React.FC = () => {
   const [folders, setFolders] = useState<{ name: string; image: string; }[]>([
@@ -23,17 +21,7 @@ const Page1: React.FC = () => {
     <div className="page-container">
       <header className="header">
         <div className="logo-container">
-          <Image src={logo} alt="Logo" className="logo" width={100} height={100} />
           <span className="logo-text">"We are Learners"</span>
-        </div>
-        <div className="button-group">
-          <ModeToggle />
-          <SignedIn>
-            <UserButton />
-          </SignedIn>
-          <SignedOut>
-            <SignInButton/>
-          </SignedOut>
         </div>
       </header>
       
@@ -47,7 +35,6 @@ const Page1: React.FC = () => {
           <div className="folders-grid">
         {folders.map((folder, index) => (
           <div key={index} className={`folder-card ${folder.name.toLowerCase()}`}>
-            <img src={folder.image} alt={folder.name} className="folder-image" />
             <div className="folder-title">{folder.name}</div>
             <Link href={'/chat'}>
               <button className="view-button">View</button>
