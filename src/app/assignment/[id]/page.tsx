@@ -1,18 +1,18 @@
-"use client"; // Ensure this is at the top
+"use client";
 
 import { useState, useEffect } from "react";
 
 interface Assignment {
   id: number;
-  title: string; // New field for title
-  subject: string; // New field for subject
+  title: string;
+  subject: string;
   learningOutcomes: string;
   markingCriteria: string;
   createdAt: string;
   updatedAt: string;
 }
 
-export default function AssignmentDetailPage({
+export default function AssignmentListPage({
   params,
 }: {
   params: { id: string };
@@ -24,8 +24,7 @@ export default function AssignmentDetailPage({
     // Fetch the specific assignment by ID
     fetch(`/api/assignment/${params.id}`)
       .then((res) => res.json())
-      .then((data) => setAssignment(data))
-      .catch((err) => console.error("Error fetching assignment details", err));
+      .then((data) => setAssignment(data));
   }, [params.id]);
 
   if (!assignment) {

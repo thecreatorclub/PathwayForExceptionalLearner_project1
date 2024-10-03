@@ -116,70 +116,14 @@ export default function AssignmentListPage() {
                 <div>
                   <Link
                     className="assignments-link"
-                    href={`/admin/assignment/${assignment.id}`}
+                    href={`/assignment/${assignment.id}`}
                   >
                     View Details
                   </Link>
-                  <button
-                    onClick={() => handleDelete(assignment.id)}
-                    className="delete-button"
-                  >
-                    Delete
-                  </button>
                 </div>
               </li>
             ))}
           </ul>
-        </div>
-
-        {/* New Assignment Form */}
-        <div className="assignment-form">
-          <h3>Add New Assignment</h3>
-          {errorMessage && <p className="error-message">{errorMessage}</p>}
-          {successMessage && (
-            <p className="success-message">{successMessage}</p>
-          )}
-          <form onSubmit={handleSubmit}>
-            <div className="form-group">
-              <label>Title:</label>
-              <input
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                required
-              />
-            </div>
-            <div className="form-group">
-              <label>Subject:</label>
-              <input
-                type="text"
-                value={subject}
-                onChange={(e) => setSubject(e.target.value)}
-                required
-              />
-            </div>
-            <div className="form-group">
-              <label>Learning Outcomes:</label>
-              <input
-                type="text"
-                value={learningOutcomes}
-                onChange={(e) => setLearningOutcomes(e.target.value)}
-                required
-              />
-            </div>
-            <div className="form-group">
-              <label>Marking Criteria:</label>
-              <input
-                type="text"
-                value={markingCriteria}
-                onChange={(e) => setMarkingCriteria(e.target.value)}
-                required
-              />
-            </div>
-            <button type="submit" className="submit-button">
-              Add Assignment
-            </button>
-          </form>
         </div>
       </div>
     </div>

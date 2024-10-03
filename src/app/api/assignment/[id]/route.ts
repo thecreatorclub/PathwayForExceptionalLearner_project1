@@ -11,6 +11,15 @@ export async function GET(
   try {
     const assignment = await prisma.assignment.findUnique({
       where: { id: parseInt(params.id) },
+      select: {
+        id: true,
+        title: true, // New field
+        subject: true, // New field
+        learningOutcomes: true,
+        markingCriteria: true,
+        createdAt: true,
+        updatedAt: true,
+      },
     });
 
     if (!assignment) {

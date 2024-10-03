@@ -523,6 +523,7 @@ textarea#student-writing {
 
 .assignment-page {
   display: flex;
+  flex-direction: row;
   justify-content: center;
   padding: 20px;
   background-color: #f5f5f5;
