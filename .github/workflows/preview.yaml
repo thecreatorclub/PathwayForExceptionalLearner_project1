@@ -3,15 +3,18 @@ env:
   VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
   VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 on:
-  push:
-    branches-ignore:
-      - main
+  # push:
+  #   branches-ignore:
+  #     - main
   pull_request_target:
-    branches:
-      - main
+    branches: [main]
 jobs:
   Deploy-Preview:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # Adjust permissions if necessary
+      issues: write # Example: if you're interacting with issues
+      pull-requests: write # If your workflow interacts with PRs
     steps:
       - uses: actions/checkout@v2
       - name: Install pnpm
