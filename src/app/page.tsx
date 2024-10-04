@@ -49,7 +49,7 @@ const Page: React.FC = () => {
             width={100}
             height={100}
           />
-          <span className="logo-text">&quot;We are Learners!!&quot;</span>
+          <span className="logo-text">&quot;We are Learners&quot;</span>
         </div>
       </header>
       <section className="intro-container">
