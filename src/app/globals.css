@@ -1,6 +1,6 @@
-@import 'tailwindcss/base';
-@import 'tailwindcss/components';
-@import 'tailwindcss/utilities';
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
 @next /next/no-img-element;
 @import url("https://fonts.googleapis.com/css2?family=Italianno&display=swap");
 
@@ -110,9 +110,11 @@ body {
   align-items: center;
 }
 
-.container, .row, .column {
+.container,
+.row,
+.column {
   padding: 0;
-  margin: 0; 
+  margin: 0;
 }
 
 .row {
@@ -129,7 +131,7 @@ body {
 
 textarea {
   width: 100%;
-  height: 100%; 
+  height: 100%;
   padding: 10px;
   box-sizing: border-box;
   border: 1px solid #ccc;
@@ -166,9 +168,9 @@ button:hover {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  overflow-y: hidden; 
+  overflow-y: hidden;
   width: 100%;
-  padding: 0; 
+  padding: 0;
   margin: 0;
 }
 
@@ -231,11 +233,12 @@ button:hover {
   gap: 20px;
 }
 
-.feedback-box, .additional-content {
+.feedback-box,
+.additional-content {
   height: 100%;
   padding: 0;
-  margin: 0; 
-  overflow-y: auto; 
+  margin: 0;
+  overflow-y: auto;
 }
 
 .sidebar-button {
@@ -474,10 +477,11 @@ textarea#student-writing {
   flex: 1;
 }
 
-.left-panel, .right-panel {
+.left-panel,
+.right-panel {
   padding: 0;
-  margin: 0; 
-  overflow: hidden; 
+  margin: 0;
+  overflow: hidden;
 }
 
 /* Scrollable content styling */
@@ -498,7 +502,8 @@ textarea#student-writing {
   border: 1px solid #ddd;
 }
 
-.left-panel > div, .right-panel > div {
+.left-panel > div,
+.right-panel > div {
   height: 100%; /* Ensure all divs inside panels fill up space */
 }
 
@@ -506,7 +511,11 @@ div {
   box-sizing: border-box;
 }
 
-body, .page-container, .content-container, .left-panel, .right-panel {
+body,
+.page-container,
+.content-container,
+.left-panel,
+.right-panel {
   max-width: 100vw;
 }
 
@@ -693,39 +702,47 @@ input {
 .intro-page-button {
   margin-top: 20px;
   padding: 10px 20px;
-  background-color: transparent; 
-  color: #3b3c3d; 
-  border: 2px solid #3b3c3d; 
+  background-color: transparent;
+  color: #3b3c3d;
+  border: 2px solid #3b3c3d;
   border-radius: 4px;
   cursor: pointer;
   font-size: 16px;
 }
 
 .intro-page-button:hover {
-  background-color: rgba(65, 67, 70, 0.1); 
+  background-color: rgba(65, 67, 70, 0.1);
 }
 
-.icon-button, .popover-button {
+.icon-button,
+.popover-button {
   background-color: white;
 }
 
-.icon-button:hover, .popover-button:hover {
+.icon-button:hover,
+.popover-button:hover {
   background-color: #ded0d0;
 }
 
-.flex-1, .h-full, .w-full, .left-panel, .right-panel, .accordion-container {
+.flex-1,
+.h-full,
+.w-full,
+.left-panel,
+.right-panel,
+.accordion-container {
   height: 100%;
   width: 100%;
 }
 
-.accordion-container, .accordion-item, .accordion-content {
-  width: 100%; 
+.accordion-container,
+.accordion-item,
+.accordion-content {
+  width: 100%;
   height: 100%;
 }
 
-.accordion-item, .accordion-content {
+.accordion-item,
+.accordion-content {
   padding: 0;
-  margin: 0; 
+  margin: 0;
 }
-
-
