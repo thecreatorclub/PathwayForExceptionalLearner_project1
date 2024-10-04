@@ -5,9 +5,9 @@ env:
 on:
   # push:
   #   branches-ignore:
-  #     - main
+  #     - no
   pull_request_target:
-    branches: [main]
+    branches: [mainxx]
 jobs:
   Deploy-Preview:
     runs-on: ubuntu-latest

@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "generate": "prisma db push",
-    "preinstall": "pnpm generate"
+    "preinstall": "pnpm generate",
+    "test:ci": "vitest run"
   },
   "dependencies": {
     "@ai-sdk/openai": "^0.0.63",
@@ -32,6 +33,7 @@
     "remark-gfm": "^4.0.0",
     "tailwindcss-animate": "^1.0.7",
     "tippy.js": "^6.3.7",
+    "vitest": "^2.1.2",
     "zod": "^3.23.8"
   },
   "devDependencies": {
