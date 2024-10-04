@@ -1,8 +1,8 @@
 "use client";
 import Image from "next/image";
+import Link from "next/link";
 import React, { useEffect, useState } from "react";
 import "./globals.css";
-import Link from "next/link";
 import logo from "./logofromfigma.png";
 
 const Page: React.FC = () => {
@@ -11,7 +11,7 @@ const Page: React.FC = () => {
 
   useEffect(() => {
     setIsClient(true);
-  
+
     const storedOption = sessionStorage.getItem("userRole");
     if (storedOption) {
       setSelectedOption(storedOption); // Restore the selection from sessionStorage
@@ -27,7 +27,6 @@ const Page: React.FC = () => {
     setSelectedOption(option);
     sessionStorage.setItem("userRole", option); // Store selection in sessionStorage
   };
-  
 
   // Conditional link routing based on user type
   const getRedirectUrl = () => {
@@ -50,7 +49,7 @@ const Page: React.FC = () => {
             width={100}
             height={100}
           />
-          <span className="logo-text">&quot;We are Learners&quot;</span>
+          <span className="logo-text">&quot;We are Learners!&quot;</span>
         </div>
       </header>
       <section className="intro-container">
@@ -72,7 +71,7 @@ const Page: React.FC = () => {
             />
             Student
           </label>
-          
+
           <label className="radio-label">
             <input
               type="radio"
@@ -92,7 +91,6 @@ const Page: React.FC = () => {
             </button>
           </Link>
         )}
-        
       </section>
     </div>
   );
