@@ -1,0 +1,25 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+model Assignment {
+  id              Int      @id @default(autoincrement())
+  title           String   // New field for the title of the assignment
+  subject         String   // New field for the subject of the assignment
+  learningOutcomes String   // Text field to store learning outcomes
+  markingCriteria  String   // Text field to store marking criteria
+  createdAt        DateTime @default(now())  // Timestamp when the assignment is created
+  updatedAt        DateTime @updatedAt       // Timestamp that updates automatically when the record is updated
+}
