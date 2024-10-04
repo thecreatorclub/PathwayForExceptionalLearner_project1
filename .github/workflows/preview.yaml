@@ -7,7 +7,7 @@ on:
   #   branches-ignore:
   #     - main
   pull_request_target:
-    branches: [main]
+    branches: [main, origin]
 jobs:
   Deploy-Preview:
     runs-on: ubuntu-latest
