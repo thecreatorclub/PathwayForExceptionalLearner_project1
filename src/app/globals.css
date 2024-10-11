@@ -1,7 +1,7 @@
-@tailwind base;
-@tailwind components;
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
 @next /next/no-img-element;
-@tailwind utilities;
 @import url("https://fonts.googleapis.com/css2?family=Italianno&display=swap");
 
 @layer base {
@@ -61,21 +61,12 @@
   }
 
   * {
-    @apply border-border;
+    border: var(--border);
   }
   body {
-    @apply bg-background text-foreground;
+    background-color: var(--background);
+    color: var(--foreground);
   }
-}
-label,
-p,
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  color: black;
 }
 
 body {
@@ -119,6 +110,11 @@ body {
   align-items: center;
 }
 
+.container, .row, .column {
+  padding: 0;
+  margin: 0; 
+}
+
 .row {
   display: flex;
   justify-content: space-around;
@@ -133,11 +129,12 @@ body {
 
 textarea {
   width: 100%;
-  resize: none;
-  border: 1px solid #ccc;
-  border-radius: 8px;
+  height: 100%; 
   padding: 10px;
   box-sizing: border-box;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  resize: none;
 }
 
 .button-container {
@@ -165,22 +162,25 @@ button:hover {
   color: #999;
 }
 
-/* General styles */
+
 .page-container {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  min-height: 100vh;
-  background-color: #faebd7;
-  font-family: Arial, sans-serif;
+  height: 100vh;
+  overflow-y: hidden; 
+  width: 100%;
+  padding: 0; 
+  margin: 0;
 }
 
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  height: 60px;
   width: 100%;
-  padding: 10px 20px;
+  padding: 0 20px;
+  margin: 0;
   background-color: #f5f5dc;
   border-bottom: 2px solid #bdb76b;
 }
@@ -216,8 +216,11 @@ button:hover {
 
 .content-container {
   display: flex;
-  width: 100%;
-  padding: 20px;
+  padding: 0;
+  margin: 0;
+  overflow: hidden;
+  height: 100%;
+  flex: 1;
 }
 
 .sidebar {
@@ -227,6 +230,13 @@ button:hover {
   display: flex;
   flex-direction: column;
   gap: 20px;
+}
+
+.feedback-box, .additional-content {
+  height: 100%;
+  padding: 0;
+  margin: 0; 
+  overflow-y: auto; 
 }
 
 .sidebar-button {
@@ -292,7 +302,7 @@ button:hover {
 /*side nav bar*/
 .sidenav {
   height: 100%;
-  width: 0;
+  width: 0; /* Start with width 0 to be hidden initially */
   position: fixed;
   z-index: 1000;
   top: 0;
@@ -300,13 +310,13 @@ button:hover {
   background-color: #111;
   opacity: 0.95;
   overflow-x: hidden;
-  transition: 0.5s;
+  transition: width 0.5s; /* Smooth transition for open/close */
   padding-top: 60px;
   text-align: center;
 }
 
 .sidenav.open {
-  width: 100%;
+  width: 250px; /* Adjust as needed for the width */
 }
 
 .sidenav h2 {
@@ -336,17 +346,20 @@ button:hover {
   background-color: #575757;
 }
 
+/* Close button styles */
 .open-sidenav-button,
 .close-sidenav-button {
   border: none;
   padding: 10px;
   cursor: pointer;
   font-size: 18px;
+  position: absolute;
+  top: 20px;
+  right: 20px;
 }
 
-.open-sidenav-button-container {
-  position: relative; /* Keep it positioned relative to the page */
-  padding: 10px;
+.open-sidenav-button {
+  right: 20px; /* Positioned on the right side */
 }
 
 .open-sidenav-button {
@@ -359,10 +372,10 @@ button:hover {
 }
 
 .close-sidenav-button {
-  position: absolute;
   top: 20px;
-  left: 20px;
+  right: 20px; /* Adjusted position to be inside the sidenav */
 }
+
 .hamburger-icon {
   display: flex;
   flex-direction: column;
@@ -377,11 +390,6 @@ button:hover {
   height: 3px;
   background-color: #333;
   border-radius: 2px;
-}
-
-.close-sidenav-button {
-  top: 20px;
-  left: calc(100% - 60px); /* Adjusted position to be on the right side */
 }
 
 .open-sidenav-button:hover,
@@ -429,7 +437,7 @@ textarea {
 }
 
 textarea#student-writing {
-  height: 555px;
+  height: 100%;
 }
 
 .markdown-body {
@@ -467,14 +475,10 @@ textarea#student-writing {
   flex: 1;
 }
 
-/* Ensures the left and right panels wrap properly and show all content */
-.left-panel,
-.right-panel {
-  display: flex;
-  flex-direction: column;
-  overflow: auto; /* Adds scrollbars if the content overflows */
-  height: 100%;
-  max-height: 100%; /* Ensure the panels don't exceed available space */
+.left-panel, .right-panel {
+  padding: 0;
+  margin: 0; 
+  overflow: hidden; 
 }
 
 /* Scrollable content styling */
@@ -485,16 +489,35 @@ textarea#student-writing {
   resize: none; /* Disable resizing to use scrollbars instead */
 }
 
-.resizable-group,
-.vertical-group {
-  display: flex;
-  flex: 1;
+.resizable-group {
+  height: 100%;
 }
 
 .left-panel,
 .right-panel {
   padding: 10px;
   border: 1px solid #ddd;
+}
+
+.left-panel > div, .right-panel > div {
+  height: 100%; /* Ensure all divs inside panels fill up space */
+}
+
+div {
+  box-sizing: border-box;
+}
+
+body, .page-container, .content-container, .left-panel, .right-panel {
+  max-width: 100vw;
+}
+
+.accordion-container {
+  height: calc(100% - 50px); /* Adjust based on header size */
+  overflow-y: auto;
+}
+
+body {
+  overflow: hidden;
 }
 
 .student-writing-box {
@@ -514,11 +537,6 @@ textarea#student-writing {
   background-color: yellow;
   text-decoration: underline;
   cursor: pointer;
-}
-
-.tippy-box[data-theme~="black-and-white"] {
-  background-color: white;
-  color: black;
 }
 
 .assignment-page {
@@ -649,18 +667,42 @@ input {
   left: 2px; 
 }
 
-/* Transparent button */
 .intro-page-button {
   margin-top: 20px;
   padding: 10px 20px;
-  background-color: transparent; /* Transparent background */
-  color: #3b3c3d; /* Set the text color to your preferred color */
-  border: 2px solid #3b3c3d; /* Add a border to make it visible */
+  background-color: transparent; 
+  color: #3b3c3d; 
+  border: 2px solid #3b3c3d; 
   border-radius: 4px;
   cursor: pointer;
   font-size: 16px;
 }
 
 .intro-page-button:hover {
-  background-color: rgba(65, 67, 70, 0.1); /* Add a slight hover effect with transparency */
+  background-color: rgba(65, 67, 70, 0.1); 
 }
+
+.icon-button, .popover-button {
+  background-color: white;
+}
+
+.icon-button:hover, .popover-button:hover {
+  background-color: #ded0d0;
+}
+
+.flex-1, .h-full, .w-full, .left-panel, .right-panel, .accordion-container {
+  height: 100%;
+  width: 100%;
+}
+
+.accordion-container, .accordion-item, .accordion-content {
+  width: 100%; 
+  height: 100%;
+}
+
+.accordion-item, .accordion-content {
+  padding: 0;
+  margin: 0; 
+}
+
+
