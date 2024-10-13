@@ -1,3 +1,5 @@
-import { it } from "vitest";
+import { expect, it } from "vitest";
 
-it("exists", () => {});
+it("exists", () => {
+  expect(true).toBe(false);
+});

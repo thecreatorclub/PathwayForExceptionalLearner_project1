@@ -31,9 +31,9 @@ const Page: React.FC = () => {
   // Conditional link routing based on user type
   const getRedirectUrl = () => {
     if (selectedOption === "Teachers") {
-      return "/assignment"; // Redirect to the assignment editing page for teachers
+      return "admin/assignments"; // Redirect to the assignment editing page for teachers
     } else if (selectedOption === "Students") {
-      return "/chat"; // Redirect to the chat page for students
+      return "/assignments"; // Redirect to the assignments page for students
     }
     return "#"; // Default URL if no option is selected
   };
@@ -49,7 +49,7 @@ const Page: React.FC = () => {
             width={100}
             height={100}
           />
-          <span className="logo-text">&quot;We are Learners!!&quot;</span>
+          <span className="logo-text">&quot;We are Learners&quot;</span>
         </div>
       </header>
       <section className="intro-container">
