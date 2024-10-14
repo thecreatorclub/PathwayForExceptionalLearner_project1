@@ -21,6 +21,10 @@ export default function AssignmentListPage() {
   const [markingCriteria, setMarkingCriteria] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [editingAssignmentId, setEditingAssignmentId] = useState<number | null>(
+    null
+  );
+  const [showForm, setShowForm] = useState(false); // New state to control visibility
 
   // Fetch all assignments
   useEffect(() => {
@@ -30,7 +34,7 @@ export default function AssignmentListPage() {
       .catch((err) => console.error("Error fetching assignments", err));
   }, []);
 
-  // Handle form submission to add a new assignment
+  // Handle form submission to add or edit an assignment
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -40,8 +44,13 @@ export default function AssignmentListPage() {
     }
 
     try {
-      const response = await fetch("/api/assignment", {
-        method: "POST",
+      const url = editingAssignmentId
+        ? `/api/assignment/${editingAssignmentId}`
+        : "/api/assignment";
+      const method = editingAssignmentId ? "PUT" : "POST";
+
+      const response = await fetch(url, {
+        method,
         headers: {
           "Content-Type": "application/json",
         },
@@ -54,21 +63,54 @@ export default function AssignmentListPage() {
       });
 
       if (response.ok) {
-        const newAssignment = await response.json();
-        // Append the new assignment to the state
-        setAssignments([...assignments, newAssignment]);
-        setTitle("");
-        setSubject("");
-        setLearningOutcomes("");
-        setMarkingCriteria("");
-        setErrorMessage(null);
-        setSuccessMessage("Assignment added successfully!");
+        const savedAssignment = await response.json();
+        if (editingAssignmentId) {
+          setAssignments(
+            assignments.map((assignment) =>
+              assignment.id === editingAssignmentId
+                ? savedAssignment
+                : assignment
+            )
+          );
+          setSuccessMessage("Assignment updated successfully!");
+        } else {
+          setAssignments([...assignments, savedAssignment]);
+          setSuccessMessage("Assignment added successfully!");
+        }
+        resetForm();
       } else {
-        setErrorMessage("Failed to add assignment");
+        setErrorMessage("Failed to save assignment");
       }
     } catch (error) {
-      setErrorMessage("An error occurred while adding the assignment");
+      setErrorMessage("An error occurred while saving the assignment");
     }
+  };
+
+  // Reset form fields and editing state
+  const resetForm = () => {
+    setTitle("");
+    setSubject("");
+    setLearningOutcomes("");
+    setMarkingCriteria("");
+    setEditingAssignmentId(null);
+    setErrorMessage(null);
+    setShowForm(false); // Hide the form and show the list again
+  };
+
+  // Handle edit action
+  const handleEdit = (assignment: Assignment) => {
+    setTitle(assignment.title);
+    setSubject(assignment.subject);
+    setLearningOutcomes(assignment.learningOutcomes);
+    setMarkingCriteria(assignment.markingCriteria);
+    setEditingAssignmentId(assignment.id);
+    setShowForm(true); // Show the form and hide the list
+  };
+
+  // Handle add action
+  const handleAdd = () => {
+    resetForm(); // Clear the form for adding a new assignment
+    setShowForm(true);
   };
 
   // Handle delete action
@@ -94,93 +136,120 @@ export default function AssignmentListPage() {
   return (
     <div className="assignment-page">
       <div className="assignment-container">
-        <div className="assignment-list">
-          <h2>Assignment List</h2>
-          <ul>
-            {assignments.map((assignment) => (
-              <li key={assignment.id} className="assignment-item">
-                <p>
-                  <strong>Title:</strong> {assignment.title}
-                </p>
-                <p>
-                  <strong>Subject:</strong> {assignment.subject}
-                </p>
-                <p>
-                  <strong>Learning Outcomes:</strong>{" "}
-                  {assignment.learningOutcomes}
-                </p>
-                <p>
-                  <strong>Marking Criteria:</strong>{" "}
-                  {assignment.markingCriteria}
-                </p>
-                <div>
-                  <Link
-                    className="assignments-link"
-                    href={`/admin/assignment/${assignment.id}`}
+        {/* Conditionally render Assignment List or Form based on showForm state */}
+        {!showForm ? (
+          <div className="assignment-list">
+            <Link href="/">
+              <h1 style={{ cursor: "pointer" }}>Home</h1>
+            </Link>
+            <h2>Assignment List</h2>
+            <ul>
+              {assignments.map((assignment) => (
+                <li key={assignment.id} className="assignment-item">
+                  <p>
+                    <strong>Title:</strong> {assignment.title}
+                  </p>
+                  <p>
+                    <strong>Subject:</strong> {assignment.subject}
+                  </p>
+                  <p>
+                    <strong>Learning Outcomes:</strong>
+                  </p>
+                  <pre style={{ whiteSpace: "pre-wrap" }}>
+                    {assignment.learningOutcomes}
+                  </pre>
+                  <p>
+                    <strong>Marking Criteria:</strong>
+                  </p>
+                  <pre style={{ whiteSpace: "pre-wrap" }}>
+                    {assignment.markingCriteria}
+                  </pre>
+                  <button
+                    onClick={() => handleEdit(assignment)}
+                    className="edit-button"
                   >
-                    View Details
-                  </Link>
+                    Edit
+                  </button>
                   <button
                     onClick={() => handleDelete(assignment.id)}
                     className="delete-button"
                   >
                     Delete
                   </button>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        {/* New Assignment Form */}
-        <div className="assignment-form">
-          <h3>Add New Assignment</h3>
-          {errorMessage && <p className="error-message">{errorMessage}</p>}
-          {successMessage && (
-            <p className="success-message">{successMessage}</p>
-          )}
-          <form onSubmit={handleSubmit}>
-            <div className="form-group">
-              <label>Title:</label>
-              <input
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                required
-              />
-            </div>
-            <div className="form-group">
-              <label>Subject:</label>
-              <input
-                type="text"
-                value={subject}
-                onChange={(e) => setSubject(e.target.value)}
-                required
-              />
-            </div>
-            <div className="form-group">
-              <label>Learning Outcomes:</label>
-              <input
-                type="text"
-                value={learningOutcomes}
-                onChange={(e) => setLearningOutcomes(e.target.value)}
-                required
-              />
-            </div>
-            <div className="form-group">
-              <label>Marking Criteria:</label>
-              <input
-                type="text"
-                value={markingCriteria}
-                onChange={(e) => setMarkingCriteria(e.target.value)}
-                required
-              />
-            </div>
-            <button type="submit" className="submit-button">
-              Add Assignment
+                  <div>
+                    <Link
+                      className="assignments-link"
+                      href={`/admin/assignment/${assignment.id}`}
+                    >
+                      View Details
+                    </Link>
+                  </div>
+                </li>
+              ))}
+            </ul>
+            <button onClick={handleAdd} className="add-button">
+              Add New Assignment
             </button>
-          </form>
-        </div>
+          </div>
+        ) : (
+          <div className="assignment-form">
+            <h3>
+              {editingAssignmentId ? "Edit Assignment" : "Add New Assignment"}
+            </h3>
+            {errorMessage && <p className="error-message">{errorMessage}</p>}
+            {successMessage && (
+              <p className="success-message">{successMessage}</p>
+            )}
+            <form onSubmit={handleSubmit}>
+              <div className="form-group">
+                <label>Title:</label>
+                <input
+                  type="text"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>Subject:</label>
+                <input
+                  type="text"
+                  value={subject}
+                  onChange={(e) => setSubject(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>Learning Outcomes:</label>
+                <textarea
+                  value={learningOutcomes}
+                  onChange={(e) => setLearningOutcomes(e.target.value)}
+                  required
+                  rows={4}
+                />
+              </div>
+              <div className="form-group">
+                <label>Marking Criteria:</label>
+                <textarea
+                  value={markingCriteria}
+                  onChange={(e) => setMarkingCriteria(e.target.value)}
+                  required
+                  rows={4}
+                />
+              </div>
+              <button type="submit" className="submit-button">
+                {editingAssignmentId ? "Save" : "Add Assignment"}
+              </button>
+              <button
+                type="button"
+                onClick={resetForm}
+                className="cancel-button"
+              >
+                Cancel
+              </button>
+            </form>
+          </div>
+        )}
       </div>
     </div>
   );

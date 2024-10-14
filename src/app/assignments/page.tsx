@@ -95,6 +95,9 @@ export default function AssignmentListPage() {
     <div className="assignment-page">
       <div className="assignment-container">
         <div className="assignment-list">
+          <Link href="/">
+            <h1 style={{ cursor: "pointer" }}>Home</h1>
+          </Link>
           <h2>Assignment List</h2>
           <ul>
             {assignments.map((assignment) => (
@@ -106,13 +109,17 @@ export default function AssignmentListPage() {
                   <strong>Subject:</strong> {assignment.subject}
                 </p>
                 <p>
-                  <strong>Learning Outcomes:</strong>{" "}
+                  <strong>Learning Outcomes:</strong>
+                </p>
+                <pre style={{ whiteSpace: "pre-wrap" }}>
                   {assignment.learningOutcomes}
-                </p>
+                </pre>
                 <p>
-                  <strong>Marking Criteria:</strong>{" "}
-                  {assignment.markingCriteria}
+                  <strong>Marking Criteria:</strong>
                 </p>
+                <pre style={{ whiteSpace: "pre-wrap" }}>
+                  {assignment.markingCriteria}
+                </pre>
                 <div>
                   <Link
                     className="assignments-link"

@@ -33,7 +33,7 @@ const Page: React.FC = () => {
     if (selectedOption === "Teachers") {
       return "admin/assignments"; // Redirect to the assignment editing page for teachers
     } else if (selectedOption === "Students") {
-      return "/assignments"; // Redirect to the assignments page for students
+      return "/assignments"; // Redirect to the chat page for students
     }
     return "#"; // Default URL if no option is selected
   };

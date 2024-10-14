@@ -55,3 +55,39 @@ export async function DELETE(
     );
   }
 }
+
+export async function PUT(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  const body = await req.json();
+  const { title, subject, learningOutcomes, markingCriteria } = body;
+
+  if (!title || !subject || !learningOutcomes || !markingCriteria) {
+    return NextResponse.json(
+      {
+        error:
+          "Please provide all required fields: title, subject, learningOutcomes, markingCriteria",
+      },
+      { status: 400 }
+    );
+  }
+
+  try {
+    const updatedAssignment = await prisma.assignment.update({
+      where: { id: parseInt(params.id) },
+      data: {
+        title,
+        subject,
+        learningOutcomes,
+        markingCriteria,
+      },
+    });
+    return NextResponse.json(updatedAssignment, { status: 200 });
+  } catch (error) {
+    return NextResponse.json(
+      { error: "Failed to update assignment" },
+      { status: 500 }
+    );
+  }
+}

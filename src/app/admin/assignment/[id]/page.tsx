@@ -1,6 +1,7 @@
 "use client"; // Ensure this is at the top
 
 import { useState, useEffect } from "react";
+import Link from "next/link"; // Import Link
 
 interface Assignment {
   id: number;
@@ -43,19 +44,26 @@ export default function AssignmentDetailPage({
 
   return (
     <div>
-      <h1>Assignment Details</h1>
+      <Link href="/">
+        <h1 style={{ cursor: "pointer" }}>Home</h1>
+      </Link>
       <div className="assignment-page">
         <div className="assignment-container">
           {/* Left Part: Display Title, Subject, Learning Outcomes & Marking Criteria */}
           <div className="left-column">
+            <h1>Assignment List</h1>
             <h2>Title</h2>
             <p>{assignment.title}</p> {/* New field */}
             <h2>Subject</h2>
             <p>{assignment.subject}</p> {/* New field */}
             <h2>Learning Outcomes</h2>
-            <p>{assignment.learningOutcomes}</p>
+            <pre className="assignment-item-button">
+              {assignment.learningOutcomes}
+            </pre>
             <h2>Marking Criteria</h2>
-            <p>{assignment.markingCriteria}</p>
+            <pre className="assignment-item-button">
+              <p>{assignment.markingCriteria}</p>
+            </pre>
           </div>
 
           {/* Right Part: Textbox and Generate Feedback Button */}
