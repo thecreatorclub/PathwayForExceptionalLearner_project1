@@ -4,6 +4,8 @@ import Link from "next/link";
 import React, { useEffect, useState } from "react";
 import "./globals.css";
 import logo from "./logofromfigma.png";
+import { ModeToggle } from "@/components/dark-mode-toggle";
+import { ThemeProvider } from "@/components/theme-provider";
 
 const Page: React.FC = () => {
   const [isClient, setIsClient] = useState(false);
@@ -51,6 +53,9 @@ const Page: React.FC = () => {
           />
           <span className="logo-text">&quot;We are Learners&quot;</span>
         </div>
+        <ThemeProvider>
+          <ModeToggle />
+          </ThemeProvider>
       </header>
       <section className="intro-container">
         <h1 className="intro-page-head">Empower your assignment with AI</h1>
