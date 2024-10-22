@@ -9,6 +9,7 @@ interface Assignment {
   subject: string;
   learningOutcomes: string;
   markingCriteria: string;
+  additionalPrompt: string; // Added this line
   createdAt: string;
   updatedAt: string;
 }
@@ -19,12 +20,13 @@ export default function AssignmentListPage() {
   const [subject, setSubject] = useState("");
   const [learningOutcomes, setLearningOutcomes] = useState("");
   const [markingCriteria, setMarkingCriteria] = useState("");
+  const [additionalPrompt, setAdditionalPrompt] = useState(""); // New state for additional prompt
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [editingAssignmentId, setEditingAssignmentId] = useState<number | null>(
     null
   );
-  const [showForm, setShowForm] = useState(false); // New state to control visibility
+  const [showForm, setShowForm] = useState(false);
 
   // Fetch all assignments
   useEffect(() => {
@@ -59,6 +61,7 @@ export default function AssignmentListPage() {
           subject,
           learningOutcomes,
           markingCriteria,
+          additionalPrompt,
         }),
       });
 
@@ -92,6 +95,7 @@ export default function AssignmentListPage() {
     setSubject("");
     setLearningOutcomes("");
     setMarkingCriteria("");
+    setAdditionalPrompt(""); // Reset additionalPrompt
     setEditingAssignmentId(null);
     setErrorMessage(null);
     setShowForm(false); // Hide the form and show the list again
@@ -103,9 +107,11 @@ export default function AssignmentListPage() {
     setSubject(assignment.subject);
     setLearningOutcomes(assignment.learningOutcomes);
     setMarkingCriteria(assignment.markingCriteria);
+    setAdditionalPrompt(assignment.additionalPrompt);
     setEditingAssignmentId(assignment.id);
-    setShowForm(true); // Show the form and hide the list
+    setShowForm(true);
   };
+  
 
   // Handle add action
   const handleAdd = () => {
@@ -163,6 +169,12 @@ export default function AssignmentListPage() {
                   </p>
                   <pre style={{ whiteSpace: "pre-wrap" }}>
                     {assignment.markingCriteria}
+                  </pre>
+                  <p>
+                    <strong>Additional Prompt:</strong>
+                  </p>
+                  <pre style={{ whiteSpace: 'pre-wrap' }}>
+                    {assignment.additionalPrompt}
                   </pre>
                   <button
                     onClick={() => handleEdit(assignment)}
@@ -245,7 +257,16 @@ export default function AssignmentListPage() {
                   rows={4}
                 />
               </div>
-              <button type="submit" className="submit-button">
+              <div className="form-group">
+                <label>Additional Prompt:</label>
+                <textarea
+                  value={additionalPrompt}
+                  onChange={(e) => setAdditionalPrompt(e.target.value)}
+                  rows={4}
+                  placeholder="Enter additional prompt here..."
+                />
+              </div>
+              <button type="submit">
                 {editingAssignmentId ? "Save" : "Add Assignment"}
               </button>
               <button

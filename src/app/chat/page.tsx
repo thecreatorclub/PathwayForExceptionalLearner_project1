@@ -331,19 +331,22 @@ const Page2 = () => {
   }, [feedback]);
 
   return (
-    <div className="page-container flex flex-col h-screen">
+    <div className="page-container flex flex-col">
       {/* Header */}
-      <header className="header flex justify-between items-center p-4 bg-gray-100">
+      <header className="header flex justify-between items-center p-4">
         <div className="logo-container">
           <span className="logo-text text-xl font-semibold">
             “We are Learners”
           </span>
         </div>
-        <PopoverDemo
-          initialPrompt={additionalPrompt}
-          onSave={handleSaveAdditionalPrompt}
-          onClear={handleClearAdditionalPrompt}
-        />
+        <div className="flex items-center space-x-4">
+          {/*<UserButton />*/}
+          <PopoverDemo
+            initialPrompt={additionalPrompt}
+            onSave={handleSaveAdditionalPrompt}
+            onClear={handleClearAdditionalPrompt}
+          />
+        </div>
       </header>
 
       {/* Main Content */}
@@ -370,7 +373,10 @@ const Page2 = () => {
         </Draggable>
 
         <main className="flex-1 p-4 overflow-auto">
-          <div className="flex flex-col h-full space-y-4">
+          <div
+            className="flex flex-col space-y-4"
+            style={{ height: "200vh", width: "500vh" }}
+          >
             {/* Top PanelGroup */}
             <PanelGroup direction="horizontal">
               {/* Left Panel: Learning Outcome and Marking Criteria */}
@@ -453,10 +459,14 @@ const Page2 = () => {
               {/* Right Panel: Feedback */}
               <Panel className="p-4" minSize={30} defaultSize={50}>
                 <div
-                  className="feedback-box p-4 border border-gray-300 rounded bg-gray-50 h-full"
-                  style={{ maxWidth: "700px", overflowY: "auto" }}
+                  className="feedback-box"
+                  style={{
+                    maxHeight: "625px",
+                    maxWidth: "700px",
+                    overflowY: "auto",
+                  }}
                 >
-                  <h2 className="text-lg font-semibold mb-2">Feedback</h2>
+                  <h2>Feedback</h2>
                   {loading ? (
                     <div className="loading">Generating feedback...</div>
                   ) : (
@@ -509,13 +519,8 @@ const Page2 = () => {
                 <div style={{ flex: 1, overflowY: "auto" }}>
                   <div
                     style={{
-                      border: "1px solid #ccc",
-                      padding: "10px",
-                      minHeight: "150px",
-                      width: "100%",
-                      fontFamily: "monospace",
-                      whiteSpace: "pre-wrap",
-                      wordWrap: "break-word",
+                      display: "flex",
+                      flexDirection: "column",
                     }}
                   >
                     {errorList.map((error) => (

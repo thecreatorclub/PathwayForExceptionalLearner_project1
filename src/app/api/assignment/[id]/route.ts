@@ -17,6 +17,7 @@ export async function GET(
         subject: true,
         learningOutcomes: true,
         markingCriteria: true,
+        additionalPrompt: true, // New field
         createdAt: true,
         updatedAt: true,
       },
@@ -61,7 +62,7 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   const body = await req.json();
-  const { title, subject, learningOutcomes, markingCriteria } = body;
+  const { title, subject, learningOutcomes, markingCriteria, additionalPrompt } = body; // Include additionalPrompt
 
   if (!title || !subject || !learningOutcomes || !markingCriteria) {
     return NextResponse.json(
@@ -81,6 +82,7 @@ export async function PUT(
         subject,
         learningOutcomes,
         markingCriteria,
+        additionalPrompt, // Update additionalPrompt
       },
     });
     return NextResponse.json(updatedAssignment, { status: 200 });
