@@ -1,5 +1,3 @@
-// components/PopoverDemo.tsx
-
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -13,8 +11,20 @@ interface PopoverDemoProps {
   onClear: () => void;
 }
 
-const PopoverDemo: React.FC<PopoverDemoProps> = React.memo(
-  ({ initialPrompt, onSave, onClear }) => {
+interface PopoverDemoPropsForStudent {
+  initialText: string;
+}
+
+const PopoverDemo: React.FC<PopoverDemoProps | PopoverDemoPropsForStudent> = React.memo(
+  (props) => {
+    const isStudentProps = (props: PopoverDemoProps | PopoverDemoPropsForStudent): props is PopoverDemoPropsForStudent => {
+      return (props as PopoverDemoPropsForStudent).initialText !== undefined;
+    };
+
+    const initialPrompt = isStudentProps(props) ? props.initialText : props.initialPrompt;
+    const onSave = isStudentProps(props) ? () => {} : props.onSave;
+    const onClear = isStudentProps(props) ? () => {} : props.onClear;
+
     const [localPrompt, setLocalPrompt] = useState(initialPrompt);
     const [popoverOpen, setPopoverOpen] = useState(false);
     const [activeButton, setActiveButton] = useState<string | null>(null);
@@ -117,64 +127,70 @@ Update Prompt with below:
             <h3 className="text-xl font-bold leading-tight">Additional Prompt</h3>
           </div>
           <div className="grid gap-4">
-            <div className="flex space-x-4">
-              {/* New Buttons Column on the Left Side */}
-              <div className="flex flex-col justify-start space-y-2">
-                <button
-                  className={`popover-button button-tertiary ${
-                    activeButton === "Biology" ? "bg-blue-500 text-white" : ""
-                  }`}
-                  onClick={() => handleButtonClick("Biology")}
-                >
-                  Biology
-                </button>
-                <button
-                  className={`popover-button button-tertiary ${
-                    activeButton === "History" ? "bg-blue-500 text-white" : ""
-                  }`}
-                  onClick={() => handleButtonClick("History")}
-                >
-                  History
-                </button>
-              </div>
-              {/* Textarea */}
-              <textarea
-                value={localPrompt}
-                onChange={(e) => setLocalPrompt(e.target.value)}
-                onClick={(e) => e.stopPropagation()} // Prevents click events from bubbling up
-                onFocus={(e) => e.stopPropagation()} // Prevents focus events from bubbling up
-                rows={10}
-                className="textarea"
-                style={{ width: "100%", height: "200px", overflowY: "auto" }}
-                placeholder="Enter additional prompt here..."
-              />
-            </div>
-            {/* Horizontal Save and Clear Buttons */}
-            <div className="grid gap-2">
-              <div className="flex justify-end space-x-2">
-                <button
-                  className="popover-button button-primary"
-                  onClick={() => {
-                    onSave(localPrompt);
-                    setPopoverOpen(false); // Close Popover after saving
-                    setActiveButton(null); // Reset active button state
-                  }}
-                >
-                  Save
-                </button>
-                <button
-                  className="popover-button button-secondary"
-                  onClick={() => {
-                    onClear();
-                    setLocalPrompt(""); // Clear the local prompt
-                    setPopoverOpen(false); // Close Popover after clearing
-                    setActiveButton(null); // Reset active button state
-                  }}
-                >
-                  Clear
-                </button>
-              </div>
-            </div>
+            {isStudentProps(props) ? (
+              <div>{initialPrompt}</div>
+            ) : (
+              <>
+                <div className="flex space-x-4">
+                  {/* New Buttons Column on the Left Side */}
+                  <div className="flex flex-col justify-start space-y-2">
+                    <button
+                      className={`popover-button button-tertiary ${
+                        activeButton === "Biology" ? "bg-blue-500 text-white" : ""
+                      }`}
+                      onClick={() => handleButtonClick("Biology")}
+                    >
+                      Biology
+                    </button>
+                    <button
+                      className={`popover-button button-tertiary ${
+                        activeButton === "History" ? "bg-blue-500 text-white" : ""
+                      }`}
+                      onClick={() => handleButtonClick("History")}
+                    >
+                      History
+                    </button>
+                  </div>
+                  {/* Textarea */}
+                  <textarea
+                    value={localPrompt}
+                    onChange={(e) => setLocalPrompt(e.target.value)}
+                    onClick={(e) => e.stopPropagation()} // Prevents click events from bubbling up
+                    onFocus={(e) => e.stopPropagation()} // Prevents focus events from bubbling up
+                    rows={10}
+                    className="textarea"
+                    style={{ width: "100%", height: "200px", overflowY: "auto" }}
+                    placeholder="Enter additional prompt here..."
+                  />
+                </div>
+                {/* Horizontal Save and Clear Buttons */}
+                <div className="grid gap-2">
+                  <div className="flex justify-end space-x-2">
+                    <button
+                      className="popover-button button-primary"
+                      onClick={() => {
+                        onSave(localPrompt);
+                        setPopoverOpen(false); // Close Popover after saving
+                        setActiveButton(null); // Reset active button state
+                      }}
+                    >
+                      Save
+                    </button>
+                    <button
+                      className="popover-button button-secondary"
+                      onClick={() => {
+                        onClear();
+                        setLocalPrompt(""); // Clear the local prompt
+                        setPopoverOpen(false); // Close Popover after clearing
+                        setActiveButton(null); // Reset active button state
+                      }}
+                    >
+                      Clear
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </PopoverContent>
       </Popover>

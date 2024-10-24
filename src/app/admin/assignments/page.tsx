@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import App from '@/components/select-menu/selectmenu';
 
 interface Assignment {
   id: number;
@@ -9,7 +10,7 @@ interface Assignment {
   subject: string;
   learningOutcomes: string;
   markingCriteria: string;
-  additionalPrompt: string; // Added this line
+  additionalPrompt: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -35,6 +36,14 @@ export default function AssignmentListPage() {
       .then((data) => setAssignments(data))
       .catch((err) => console.error("Error fetching assignments", err));
   }, []);
+
+  // Handle textarea input to adjust height
+  const handleTextareaInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const textarea = e.target;
+    textarea.style.height = 'auto';
+    textarea.style.height = `${textarea.scrollHeight}px`;
+  };
+
 
   // Handle form submission to add or edit an assignment
   const handleSubmit = async (e: React.FormEvent) => {
@@ -244,6 +253,7 @@ export default function AssignmentListPage() {
                 <textarea
                   value={learningOutcomes}
                   onChange={(e) => setLearningOutcomes(e.target.value)}
+                  onInput={handleTextareaInput}
                   required
                   rows={4}
                 />
@@ -253,16 +263,20 @@ export default function AssignmentListPage() {
                 <textarea
                   value={markingCriteria}
                   onChange={(e) => setMarkingCriteria(e.target.value)}
+                  onInput={handleTextareaInput}
                   required
                   rows={4}
                 />
               </div>
               <div className="form-group">
                 <label>Additional Prompt:</label>
+                <App/>
                 <textarea
                   value={additionalPrompt}
                   onChange={(e) => setAdditionalPrompt(e.target.value)}
+                  onInput={handleTextareaInput}
                   rows={4}
+                  style={{height: '200px'}}
                   placeholder="Enter additional prompt here..."
                 />
               </div>
