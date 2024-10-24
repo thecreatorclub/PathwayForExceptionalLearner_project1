@@ -25,6 +25,7 @@ interface Assignment {
   subject: string;
   learningOutcomes: string;
   markingCriteria: string;
+  additionalPrompt: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -341,9 +342,7 @@ export default function AssignmentPage({
             <ModeToggle />
           </ThemeProvider>
           <PopoverDemo
-            initialPrompt={additionalPrompt}
-            onSave={handleSaveAdditionalPrompt}
-            onClear={handleClearAdditionalPrompt}
+            initialText={assignment.additionalPrompt}
           />
         </div>
       </header>
@@ -409,7 +408,7 @@ export default function AssignmentPage({
                             <div>
                             <textarea
                               value={learningOutcome}
-                              onChange={(e) => setLearningOutcome(e.target.value)}
+                              readOnly
                               rows={10}
                               className="textarea w-full p-2 border border-gray-300 rounded"
                               placeholder="Enter learning outcomes here..."
@@ -439,7 +438,7 @@ export default function AssignmentPage({
                             </pre> */}
                             <textarea
                               value={markingCriteria}
-                              onChange={(e) => setMarkingCriteria(e.target.value)}
+                              readOnly
                               rows={10}
                               className="textarea w-full p-2 border border-gray-300 rounded"
                               placeholder="Enter marking criteria here..."
