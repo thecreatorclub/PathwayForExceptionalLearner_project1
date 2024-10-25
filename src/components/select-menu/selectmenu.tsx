@@ -2,11 +2,11 @@ import React from 'react';
 import chroma from 'chroma-js';
 
 import { SubjectOption, SubjectOptions } from './data';
-import Select, { StylesConfig } from 'react-select';
+import Select, { StylesConfig, CSSObjectWithLabel } from 'react-select';
 
 const colourStyles: StylesConfig<SubjectOption, true> = {
   control: (styles: any) => ({ ...styles, backgroundColor: 'white' }),
-  option: (styles: React.CSSProperties & { [key: string]: any }, { data, isDisabled, isFocused, isSelected }: { data: SubjectOption, isDisabled: boolean, isFocused: boolean, isSelected: boolean }) => {
+  option: (styles, { data, isDisabled, isFocused, isSelected }) => {
     const color = chroma(data.color);
     return {
       ...styles,
@@ -36,18 +36,18 @@ const colourStyles: StylesConfig<SubjectOption, true> = {
       },
     };
   },
-  multiValue: (styles: React.CSSProperties, { data }: { data: SubjectOption }) => {
+  multiValue: (styles: CSSObjectWithLabel, { data }: { data: SubjectOption }) => {
     const color = chroma(data.color);
     return {
       ...styles,
       backgroundColor: color.alpha(0.1).css(),
     };
   },
-  multiValueLabel: (styles: React.CSSProperties, { data }: { data: SubjectOption }) => ({
+  multiValueLabel: (styles: CSSObjectWithLabel, { data }: { data: SubjectOption }) => ({
     ...styles,
     color: data.color,
   }),
-  multiValueRemove: (styles: React.CSSProperties, { data }: { data: SubjectOption }) => ({
+  multiValueRemove: (styles: CSSObjectWithLabel, { data }: { data: SubjectOption }) => ({
     ...styles,
     color: data.color,
     ':hover': {
