@@ -32,13 +32,13 @@
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
   }
-
   .dark {
-    --background: 240 10% 3.9%;
+    --background: 200 10% 3.9%;
     --foreground: 0 0% 98%;
     --card: 240 10% 3.9%;
     --card-foreground: 0 0% 98%;
     --popover: 240 10% 3.9%;
+    --span: 0 0% 98%;
     --popover-foreground: 0 0% 98%;
     --primary: 0 0% 98%;
     --primary-foreground: 240 5.9% 10%;
@@ -59,6 +59,30 @@
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
   }
+  .dark button:hover {
+    background-color: #57595a;
+  }
+
+  .dark .textarea {
+    background-color: #57595a;
+    color: white;
+  }
+
+  .dark .feedback-box {
+    background-color: #57595a;
+    color: white;
+  }
+
+  .dark [role="textbox"] {
+    background-color: #57595a;
+    color: white;
+  }
+
+  .dark .Improvement-box {
+    background-color: #57595a;
+    color: white;
+  }
+  
 
   * {
     border: var(--border);
@@ -71,7 +95,6 @@
 
 body {
   height: 100vh;
-  background-color: #faebd7;
 }
 .intro-container {
   display: flex;
@@ -98,7 +121,6 @@ body {
 .intro-page-button {
   padding: 0.5rem 1rem;
   border: 1px solid #000;
-  background-color: black;
   cursor: pointer;
   border-radius: 8px;
   font-size: 1rem;
@@ -148,16 +170,13 @@ textarea {
 
 button {
   padding: 10px 20px;
-  border: 1px solid black;
-  background-color: black;
+  border: 1px solid #808080;
   cursor: pointer;
+  margin-right: 5px;
   border-radius: 8px;
   font-size: 16px;
 }
 
-button:hover {
-  background-color: #f0f0f0;
-}
 
 .loading {
   font-size: 14px;
@@ -182,8 +201,7 @@ button:hover {
   width: 100%;
   padding: 0 20px;
   margin: 0;
-  background-color: #f5f5dc;
-  border-bottom: 2px solid #bdb76b;
+  border-bottom: 2px solid #f4f3ef;
 }
 
 .logo-container {
@@ -200,7 +218,6 @@ button:hover {
   font-family: "Italianno", cursive;
   font-size: 36px;
   margin-left: 10px;
-  color: #000;
 }
 
 .profile-info {
@@ -226,7 +243,6 @@ button:hover {
 
 .sidebar {
   width: 200px;
-  background-color: #8b4513;
   padding: 20px;
   display: flex;
   flex-direction: column;
@@ -241,6 +257,13 @@ button:hover {
   overflow-y: auto;
 }
 
+.feedback-box {
+  padding: 1rem;
+  border: 1px solid #808080; /* border-gray-150 */
+  border-radius: 0.25rem;
+  height: 100%;
+}
+
 .sidebar-button {
   width: 100%;
   padding: 10px;
@@ -251,7 +274,6 @@ button:hover {
 }
 
 .create-folder-button {
-  background-color: #000;
   color: #fff;
 }
 
@@ -273,7 +295,6 @@ button:hover {
   padding: 10px;
   border: 1px solid #bdb76b;
   border-radius: 10px;
-  background-color: #fff;
 }
 
 .folder-image {
@@ -292,13 +313,8 @@ button:hover {
   margin-top: 10px;
   padding: 5px 10px;
   border: 1px solid #000;
-  background-color: #fff;
   cursor: pointer;
   border-radius: 5px;
-}
-
-.view-button:hover {
-  background-color: #f5f5dc;
 }
 
 /*side nav bar*/
@@ -309,7 +325,6 @@ button:hover {
   z-index: 1000;
   top: 0;
   left: 0;
-  background-color: #111;
   opacity: 0.95;
   overflow-x: hidden;
   transition: width 0.5s; /* Smooth transition for open/close */
@@ -322,7 +337,6 @@ button:hover {
 }
 
 .sidenav h2 {
-  color: white;
   margin-top: 0;
 }
 
@@ -365,7 +379,6 @@ button:hover {
 }
 
 .open-sidenav-button {
-  background-color: #f2f5f8;
   color: white;
   border: none;
   padding: 10px 20px;
@@ -390,7 +403,6 @@ button:hover {
   display: block;
   width: 100%;
   height: 3px;
-  background-color: #333;
   border-radius: 2px;
 }
 
@@ -432,7 +444,7 @@ main {
 textarea {
   width: 100%;
   resize: none;
-  border: 1px solid #ccc;
+  border: 1px solid #d2c4c4;
   border-radius: 8px;
   padding: 10px;
   box-sizing: border-box;
@@ -444,7 +456,7 @@ textarea#student-writing {
 
 .markdown-body {
   width: 100%;
-  border: 1px solid #080606;
+  border: 1px solid #080806;
   padding: 20px;
   border-radius: 8px;
 }
@@ -542,7 +554,6 @@ body {
 }
 
 .highlight-button {
-  background-color: yellow;
   text-decoration: underline;
   cursor: pointer;
 }
@@ -551,10 +562,9 @@ body {
   display: flex;
   flex-direction: row;
   justify-content: center;
+  overflow-y: auto;
   padding: 20px;
-  background-color: #f5f5f5;
   height: 100vh;
-  box-sizing: border-box;
 }
 
 .assignment-container {
@@ -563,11 +573,13 @@ body {
   width: 100%;
   max-width: 1200px;
   gap: 20px;
+  box-sizing: border-box;
+  flex-wrap: wrap;
+  min-height: auto;
 }
 
 .assignment-form,
 .assignment-list {
-  background-color: #fff;
   padding: 20px;
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
@@ -575,7 +587,10 @@ body {
 }
 
 .assignment-form {
+  flex: 1;
   width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
 }
 
 .assignment-list {
@@ -586,7 +601,6 @@ h1,
 h2 {
   font-size: 1.5rem;
   margin-bottom: 1rem;
-  color: #333;
 }
 
 .form-group {
@@ -601,7 +615,6 @@ label {
   display: block;
   margin-bottom: 5px;
   font-weight: bold;
-  color: #555;
 }
 
 input {
@@ -612,10 +625,8 @@ input {
   box-sizing: border-box;
 }
 
-.submit-button {
+/* .submit-button {
   padding: 10px 20px;
-  background-color: #0070f3;
-  color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
@@ -624,7 +635,7 @@ input {
 
 .submit-button:hover {
   background-color: #005bb5;
-}
+} */
 
 .assignment-item {
   display: flex;
@@ -702,7 +713,6 @@ input {
 .intro-page-button {
   margin-top: 20px;
   padding: 10px 20px;
-  background-color: transparent;
   color: #3b3c3d;
   border: 2px solid #3b3c3d;
   border-radius: 4px;
@@ -712,16 +722,6 @@ input {
 
 .intro-page-button:hover {
   background-color: rgba(65, 67, 70, 0.1);
-}
-
-.icon-button,
-.popover-button {
-  background-color: white;
-}
-
-.icon-button:hover,
-.popover-button:hover {
-  background-color: #ded0d0;
 }
 
 .flex-1,
@@ -745,16 +745,6 @@ input {
 .accordion-content {
   padding: 0;
   margin: 0;
-}
-
-.icon-button,
-.popover-button {
-  background-color: white;
-}
-
-.icon-button:hover,
-.popover-button:hover {
-  background-color: #ded0d0;
 }
 
 .flex-1,

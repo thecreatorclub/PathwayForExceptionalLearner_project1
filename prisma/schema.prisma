@@ -20,6 +20,7 @@ model Assignment {
   subject         String   // New field for the subject of the assignment
   learningOutcomes String   // Text field to store learning outcomes
   markingCriteria  String   // Text field to store marking criteria
+  additionalPrompt String?   // Text field to store additional prompt
   createdAt        DateTime @default(now())  // Timestamp when the assignment is created
   updatedAt        DateTime @updatedAt       // Timestamp that updates automatically when the record is updated
 }

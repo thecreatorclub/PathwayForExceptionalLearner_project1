@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import App from '@/components/select-menu/selectmenu';
 
 interface Assignment {
   id: number;
@@ -9,6 +10,7 @@ interface Assignment {
   subject: string;
   learningOutcomes: string;
   markingCriteria: string;
+  additionalPrompt: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -19,12 +21,13 @@ export default function AssignmentListPage() {
   const [subject, setSubject] = useState("");
   const [learningOutcomes, setLearningOutcomes] = useState("");
   const [markingCriteria, setMarkingCriteria] = useState("");
+  const [additionalPrompt, setAdditionalPrompt] = useState(""); // New state for additional prompt
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [editingAssignmentId, setEditingAssignmentId] = useState<number | null>(
     null
   );
-  const [showForm, setShowForm] = useState(false); // New state to control visibility
+  const [showForm, setShowForm] = useState(false);
 
   // Fetch all assignments
   useEffect(() => {
@@ -33,6 +36,14 @@ export default function AssignmentListPage() {
       .then((data) => setAssignments(data))
       .catch((err) => console.error("Error fetching assignments", err));
   }, []);
+
+  // Handle textarea input to adjust height
+  const handleTextareaInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const textarea = e.target;
+    textarea.style.height = 'auto';
+    textarea.style.height = `${textarea.scrollHeight}px`;
+  };
+
 
   // Handle form submission to add or edit an assignment
   const handleSubmit = async (e: React.FormEvent) => {
@@ -59,6 +70,7 @@ export default function AssignmentListPage() {
           subject,
           learningOutcomes,
           markingCriteria,
+          additionalPrompt,
         }),
       });
 
@@ -92,6 +104,7 @@ export default function AssignmentListPage() {
     setSubject("");
     setLearningOutcomes("");
     setMarkingCriteria("");
+    setAdditionalPrompt(""); // Reset additionalPrompt
     setEditingAssignmentId(null);
     setErrorMessage(null);
     setShowForm(false); // Hide the form and show the list again
@@ -103,9 +116,11 @@ export default function AssignmentListPage() {
     setSubject(assignment.subject);
     setLearningOutcomes(assignment.learningOutcomes);
     setMarkingCriteria(assignment.markingCriteria);
+    setAdditionalPrompt(assignment.additionalPrompt);
     setEditingAssignmentId(assignment.id);
-    setShowForm(true); // Show the form and hide the list
+    setShowForm(true);
   };
+  
 
   // Handle add action
   const handleAdd = () => {
@@ -163,6 +178,12 @@ export default function AssignmentListPage() {
                   </p>
                   <pre style={{ whiteSpace: "pre-wrap" }}>
                     {assignment.markingCriteria}
+                  </pre>
+                  <p>
+                    <strong>Additional Prompt:</strong>
+                  </p>
+                  <pre style={{ whiteSpace: 'pre-wrap' }}>
+                    {assignment.additionalPrompt}
                   </pre>
                   <button
                     onClick={() => handleEdit(assignment)}
@@ -224,6 +245,7 @@ export default function AssignmentListPage() {
                 <textarea
                   value={learningOutcomes}
                   onChange={(e) => setLearningOutcomes(e.target.value)}
+                  onInput={handleTextareaInput}
                   required
                   rows={4}
                 />
@@ -233,11 +255,24 @@ export default function AssignmentListPage() {
                 <textarea
                   value={markingCriteria}
                   onChange={(e) => setMarkingCriteria(e.target.value)}
+                  onInput={handleTextareaInput}
                   required
                   rows={4}
                 />
               </div>
-              <button type="submit" className="submit-button">
+              <div className="form-group">
+                <label>Additional Prompt:</label>
+                <App/>
+                <textarea
+                  value={additionalPrompt}
+                  onChange={(e) => setAdditionalPrompt(e.target.value)}
+                  onInput={handleTextareaInput}
+                  rows={4}
+                  style={{height: '200px'}}
+                  placeholder="Enter additional prompt here..."
+                />
+              </div>
+              <button type="submit">
                 {editingAssignmentId ? "Save" : "Add Assignment"}
               </button>
               <button
