@@ -518,6 +518,7 @@ const Page2 = () => {
                 <h2 className="text-lg font-semibold mb-2">Improvements</h2>
                 <div style={{ flex: 1, overflowY: "auto" }}>
                   <div
+                    className="Improvement-box"
                     style={{
                       display: "flex",
                       flexDirection: "column",
