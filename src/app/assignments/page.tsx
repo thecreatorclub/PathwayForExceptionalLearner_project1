@@ -128,6 +128,14 @@ export default function AssignmentListPage() {
                     View Details
                   </Link>
                 </div>
+                <div>
+                  <Link
+                    className="assignments-link"
+                    href={`/chat?assignmentId=${assignment.id}&readonly=true`}
+                  >
+                    Chat
+                  </Link>
+                </div>
               </li>
             ))}
           </ul>

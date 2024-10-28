@@ -13,8 +13,8 @@ export async function GET(
       where: { id: parseInt(params.id) },
       select: {
         id: true,
-        title: true, // New field
-        subject: true, // New field
+        title: true,
+        subject: true,
         learningOutcomes: true,
         markingCriteria: true,
         createdAt: true,

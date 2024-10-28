@@ -1,12 +1,40 @@
 import { NextResponse, NextRequest } from "next/server";
+import { PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient();
 
 export async function POST(request: NextRequest) {
   try {
-    const { learningOutcome, markingCriteria, studentWriting, additionalPrompt } = await request.json();
+    const { assignmentId, studentWriting, additionalPrompt } =
+      await request.json();
+
+    // Validate input
+    if (!assignmentId || !studentWriting) {
+      return NextResponse.json(
+        { error: "assignmentId and studentWriting are required" },
+        { status: 400 }
+      );
+    }
+
+    // Fetch assignment data from the database
+    const assignment = await prisma.assignment.findUnique({
+      where: { id: parseInt(assignmentId) },
+      select: {
+        learningOutcomes: true,
+        markingCriteria: true,
+      },
+    });
+
+    if (!assignment) {
+      return NextResponse.json(
+        { error: "Assignment not found" },
+        { status: 404 }
+      );
+    }
 
     const prompt = `
-    Learning Outcome: ${learningOutcome}
-    Marking Criteria: ${markingCriteria}
+    Learning Outcome: ${assignment.learningOutcomes}
+    Marking Criteria: ${assignment.markingCriteria}
     Additional Instructions: ${additionalPrompt}
     Student Writing:
     ---
@@ -59,7 +87,7 @@ Instructions:
         Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
       },
       body: JSON.stringify({
-        model: "gpt-4o-mini",//use 4o for demonstration only
+        model: "gpt-4o-mini", //use 4o for demonstration only
         //model: 'gemini-1.5-flash',
         messages: messages,
         temperature: 0,
