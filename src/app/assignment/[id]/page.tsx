@@ -1,11 +1,15 @@
 "use client";
-import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+  useLayoutEffect,
+} from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import Draggable from "react-draggable";
 import "./../../globals.css";
-import SideNavBar from "@/components/sidebar/sidenav";
-import PopoverDemo from "@/components/ui/popover-demo";
 import {
   Accordion,
   AccordionItem,
@@ -52,23 +56,12 @@ export default function AssignmentPage({
   const [loading, setLoading] = useState(false);
   const [additionalPrompt, setAdditionalPrompt] = useState("");
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const [isSideNavOpen, setIsSideNavOpen] = useState(true);
   const [errorList, setErrorList] = useState<
     Array<{ id: string; originalText: string; improvementText: string; path: Path }>
   >([]);
+
+  // Bring back hoveredErrorId to the parent component
   const [hoveredErrorId, setHoveredErrorId] = useState<string | null>(null);
-
-  const toggleSideNav = () => setIsSideNavOpen(!isSideNavOpen);
-
-  const handleSaveAdditionalPrompt = useCallback((prompt: string) => {
-    setAdditionalPrompt(prompt);
-    localStorage.setItem("additionalPrompt", prompt);
-  }, []);
-
-  const handleClearAdditionalPrompt = useCallback(() => {
-    setAdditionalPrompt("");
-    localStorage.removeItem("additionalPrompt");
-  }, []);
 
   useEffect(() => {
     const savedPrompt = localStorage.getItem("additionalPrompt");
@@ -225,7 +218,8 @@ export default function AssignmentPage({
   };
 
   const extractFeedback = (feedback: string) => {
-    const originalTextRegex = /\*\*Original Text:\*\*\s*"([^"]+)"\s*<endoforiginal>/gi;
+    const originalTextRegex =
+      /\*\*Original Text:\*\*\s*"([^"]+)"\s*<endoforiginal>/gi;
     const improvementRegex =
       /\*\*Improvement:\*\*\s*([\s\S]*?)<endofimprovement>/g;
 
@@ -341,56 +335,19 @@ export default function AssignmentPage({
           <ThemeProvider>
             <ModeToggle />
           </ThemeProvider>
-          <PopoverDemo
-            initialText={assignment.additionalPrompt}
-          />
+          {/* Replace PopoverDemo with your component or remove if not needed */}
+          {/* <PopoverDemo initialText={assignment.additionalPrompt} /> */}
         </div>
       </header>
 
       {/* Main Content */}
-      <div className="flex flex-1 overflow-hidden">
-        {/* Draggable Side Navigation */}
-        <Draggable handle=".draggable-handle">
-          <div
-            className={`sidenav w-64 bg-white shadow-md ${
-              isSideNavOpen ? "" : "hidden"
-            }`}
-            style={{ position: "absolute", zIndex: 1000 }}
-          >
-            <div className="draggable-handle p-2 bg-gray-700 text-white cursor-move">
-              Drag Me
-            </div>
-            <button
-              onClick={toggleSideNav}
-              className="p-2 text-white bg-red-500 hover:bg-red-600"
-            >
-              {isSideNavOpen ? "Close" : "Open"} Nav
-            </button>
-            <SideNavBar />
-          </div>
-        </Draggable>
-
-        <main className="flex-1 p-4 overflow-auto">
-          <div
-            className="flex flex-col space-y-4"
-            style={{ height: "200vh", width: "500vh" }}
-          >
-            {/* Top PanelGroup */}
-            <PanelGroup direction="horizontal">
-              {/* Left Panel: Learning Outcome and Marking Criteria */}
-              <Panel className="p-4" defaultSize={50} minSize={30}>
-                <div
-                  className="accordion-container"
-                  style={{
-                    height: "100%",
-                    overflow: "hidden",
-                    display: "flex",
-                    flexDirection: "column",
-                  }}
-                >
-                  <div style={{ flex: 1, overflowY: "auto" }}>
+      <div className="flex flex-col h-screen overflow-hidden">
+        <main className="flex-grow overflow-hidden" style={{ minHeight: 0 }}>
+          <div className="flex flex-col flex-grow space-y-4">
+            {/* Container 2: Learning Outcome and Marking Criteria */}
+            <div className="container-2 w-full mb-5 border border-gray-400 p-4 rounded-lg">
+              <Accordion type="single" collapsible>
                     {/* Learning Outcome Accordion */}
-                    <Accordion type="single" collapsible>
                       <AccordionItem value="learning-outcome">
                         <AccordionTrigger
                           style={{ borderBottom: "2px solid #a1a5ab" }}
@@ -398,30 +355,17 @@ export default function AssignmentPage({
                           Learning Outcome
                         </AccordionTrigger>
                         <AccordionContent>
-                          <div>
-                            {/* <pre
-                              className="w-full p-2 border border-gray-300 rounded"
-                              style={{ whiteSpace: "pre-wrap" }}
-                            >
-                              {learningOutcome}
-                            </pre> */}
-                            <div>
                             <textarea
                               value={learningOutcome}
                               readOnly
-                              rows={10}
-                              className="textarea w-full p-2 border border-gray-300 rounded"
+                      rows={5}
+                      className="textarea w-full p-2 border border-gray-200 rounded"
                               placeholder="Enter learning outcomes here..."
                             />
-                          </div>
-                          </div>
                         </AccordionContent>
                       </AccordionItem>
-                    </Accordion>
-                  </div>
-                  <div style={{ flex: 1, overflowY: "auto" }}>
+
                     {/* Marking Criteria Accordion */}
-                    <Accordion type="single" collapsible>
                       <AccordionItem value="marking-criteria">
                         <AccordionTrigger
                           style={{ borderBottom: "2px solid #a1a5ab" }}
@@ -429,89 +373,85 @@ export default function AssignmentPage({
                           Marking Criteria
                         </AccordionTrigger>
                         <AccordionContent>
-                          <div>
-                            {/* <pre
-                              className="w-full p-2 border border-gray-300 rounded"
-                              style={{ whiteSpace: "pre-wrap" }}
-                            >
-                              {markingCriteria}
-                            </pre> */}
                             <textarea
                               value={markingCriteria}
                               readOnly
-                              rows={10}
+                      rows={5}
                               className="textarea w-full p-2 border border-gray-300 rounded"
                               placeholder="Enter marking criteria here..."
                             />
-                          </div>
+                  </AccordionContent>
+                </AccordionItem>
+
+                {/* Additional Prompt */}
+                <AccordionItem value="Additional Prompt">
+                  <AccordionTrigger
+                    style={{ borderBottom: "2px solid #a1a5ab" }}
+                  >
+                    Additional Prompt
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <textarea
+                      value={assignment.additionalPrompt}
+                      readOnly
+                      rows={5}
+                      className="textarea w-full p-2 border border-gray-300 rounded"
+                    />
                         </AccordionContent>
                       </AccordionItem>
                     </Accordion>
                   </div>
-                </div>
-              </Panel>
 
-              {/* Resize Handle */}
-              <PanelResizeHandle className="w-1 bg-gray-200 cursor-col-resize" />
-
-              {/* Right Panel: Feedback */}
-              <Panel className="p-4" minSize={30} defaultSize={50}>
-                <div
-                  className="feedback-box"
-                  style={{
-                    maxHeight: "625px",
-                    maxWidth: "700px",
-                    overflowY: "auto",
-                  }}
+            {/* Container 3: Student Writing and Feedback side by side */}
+            <div className="flex flex-grow overflow-hidden">
+              <PanelGroup direction="horizontal" className="flex flex-grow">
+                {/* Left Panel: Student Writing */}
+                <Panel
+                  className="p-4 flex flex-col flex-grow overflow-hidden"
+                  style={{ minHeight: 0 }}
                 >
-                  <h2>Feedback</h2>
-                  {loading ? (
-                    <div className="loading">Generating feedback...</div>
-                  ) : (
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                      {displayedFeedback}
-                    </ReactMarkdown>
-                  )}
-                </div>
-              </Panel>
-            </PanelGroup>
-
-            {/* Bottom PanelGroup */}
-            <PanelGroup direction="horizontal">
-              {/* Left Panel: Student Writing */}
-              <Panel
-                className="p-4"
+                  <h2 className="text-lg font-semibold mb-2">
+                    Student Writing
+                  </h2>
+                  <div
                 style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignSelf: "stretch",
+                      flexGrow: 1,
+                      overflowY: "auto",
+                      minHeight: 0,
                 }}
               >
-                <h2 className="text-lg font-semibold mb-2">Student Writing</h2>
-                <div style={{ flexGrow: 1 }}>
-                  <SlateEditor
+                    {/* Use the memoized SlateEditor */}
+                    <MemoizedSlateEditor
                     value={editorValue}
                     onChange={setEditorValue}
                     errorList={errorList}
                     onHoverError={setHoveredErrorId}
                     hoveredErrorId={hoveredErrorId}
                   />
+
+                  </div>
+                  {/* Submit Button below Student Writing */}
+                  <div className="mt-4">
+                    <button
+                      onClick={handleSubmit}
+                      className="submit-button px-4 py-2 bg-blue-500 text-white rounded"
+                    >
+                      Get Feedback
+                    </button>
                 </div>
               </Panel>
 
               {/* Resize Handle */}
               <PanelResizeHandle className="w-1 bg-gray-200 cursor-col-resize" />
 
-              {/* Right Panel: Improvements */}
+                {/* Right Panel: Feedback and Additional Feedback */}
               <Panel
-                className="p-4"
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignSelf: "stretch",
-                }}
+                  className="p-4 flex flex-col flex-grow overflow-hidden"
+                  style={{ minHeight: 0 }}
               >
                 <h2 className="text-lg font-semibold mb-2">Improvements</h2>
+
+                  {/* Improvements Section */}
                 <div
                   className="improvement-box"
                   style={{
@@ -520,7 +460,9 @@ export default function AssignmentPage({
                     fontFamily: "monospace",
                     whiteSpace: "pre-wrap",
                     wordWrap: "break-word",
-                    flexGrow: 1,
+                      overflowY: "auto",
+                      maxHeight: "200px",
+                      flexShrink: 0,
                   }}
                 >
                   {errorList.map((error) => (
@@ -535,19 +477,27 @@ export default function AssignmentPage({
                     >
                       {error.improvementText}
                     </div>
+                    
                   ))}
                 </div>
+                  {/* Feedback Section */}
+                  <h2 className="text-lg font-semibold mb-2">
+                    Additional Feedback
+                  </h2>
+                  <div
+                    className="feedback-box flex-grow overflow-y-auto"
+                    style={{ maxHeight: "200px" }}
+                  >
+                    {loading ? (
+                      <div className="loading">Generating feedback...</div>
+                    ) : (
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        {displayedFeedback}
+                      </ReactMarkdown>
+                    )}
+                  </div>
               </Panel>
             </PanelGroup>
-
-            {/* Submit Button */}
-            <div className="text-center">
-              <button
-                onClick={handleSubmit}
-                className="submit-button px-4 py-2 bg-blue-500 text-white rounded"
-              >
-                Get Feedback
-              </button>
             </div>
           </div>
         </main>
