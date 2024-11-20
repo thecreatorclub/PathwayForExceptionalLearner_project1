@@ -59,7 +59,7 @@ Instructions:
         Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
       },
       body: JSON.stringify({
-        model: "gpt-4o-mini",//use 4o for demonstration only
+        model: "gpt-4o",//use 4o for demonstration only
         //model: 'gemini-1.5-flash',
         messages: messages,
         temperature: 0,

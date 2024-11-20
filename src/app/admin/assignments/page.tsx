@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import App from '@/components/select-menu/selectmenu';
+import SelectMenu from '@/components/select-menu/selectmenu';
+import { SubjectOptions, Biology, History, SubjectOption } from '@/components/select-menu/data';
 
 interface Assignment {
   id: number;
@@ -28,6 +29,7 @@ export default function AssignmentListPage() {
     null
   );
   const [showForm, setShowForm] = useState(false);
+  const [selectedSubject, setSelectedSubject] = useState<SubjectOption | null>(null);
 
   // Fetch all assignments
   useEffect(() => {
@@ -44,6 +46,23 @@ export default function AssignmentListPage() {
     textarea.style.height = `${textarea.scrollHeight}px`;
   };
 
+  // Handle subject change
+  const handleSubjectChange = (selectedOption: SubjectOption | null) => {
+    setSelectedSubject(selectedOption);
+    setSubject(selectedOption ? selectedOption.value : '');
+
+    if (selectedOption) {
+      if (selectedOption.value === 'Biology') {
+        setAdditionalPrompt(Biology);
+      } else if (selectedOption.value === 'History') {
+        setAdditionalPrompt(History);
+      } else if (selectedOption.value === 'Custom') {
+        setAdditionalPrompt('');
+      }
+    } else {
+      setAdditionalPrompt('');
+    }
+  };
 
   // Handle form submission to add or edit an assignment
   const handleSubmit = async (e: React.FormEvent) => {
@@ -119,8 +138,11 @@ export default function AssignmentListPage() {
     setAdditionalPrompt(assignment.additionalPrompt);
     setEditingAssignmentId(assignment.id);
     setShowForm(true);
+
+    // Set selectedSubject based on assignment.subject
+    const selectedOption = SubjectOptions.find(option => option.value === assignment.subject);
+    setSelectedSubject(selectedOption || null);
   };
-  
 
   // Handle add action
   const handleAdd = () => {
@@ -232,15 +254,6 @@ export default function AssignmentListPage() {
                 />
               </div>
               <div className="form-group">
-                <label>Subject:</label>
-                <input
-                  type="text"
-                  value={subject}
-                  onChange={(e) => setSubject(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="form-group">
                 <label>Learning Outcomes:</label>
                 <textarea
                   value={learningOutcomes}
@@ -261,15 +274,19 @@ export default function AssignmentListPage() {
                 />
               </div>
               <div className="form-group">
+                <label>Subject:</label>
+                <SelectMenu onChange={handleSubjectChange} value={selectedSubject} />
+              </div>
+              <div className="form-group">
                 <label>Additional Prompt:</label>
-                <App/>
                 <textarea
                   value={additionalPrompt}
                   onChange={(e) => setAdditionalPrompt(e.target.value)}
                   onInput={handleTextareaInput}
                   rows={4}
-                  style={{height: '200px'}}
+                  style={{ height: '200px' }}
                   placeholder="Enter additional prompt here..."
+                  disabled={selectedSubject && selectedSubject.value !== 'Custom'}
                 />
               </div>
               <button type="submit">

@@ -57,11 +57,18 @@ const colourStyles: StylesConfig<SubjectOption, true> = {
   }),
 };
 
-const SelectMenu = () => (
+interface SelectMenuProps {
+  onChange: (selectedOption: SubjectOption | null) => void;
+  value: SubjectOption | null;
+}
+
+const SelectMenu: React.FC<SelectMenuProps> = ({ onChange, value }) => (
   <Select
-    closeMenuOnSelect={false}
+    closeMenuOnSelect={true}
     options={SubjectOptions}
     styles={colourStyles}
+    onChange={onChange}
+    value={value}
   />
 );
 

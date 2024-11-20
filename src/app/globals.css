@@ -93,6 +93,17 @@
   }
 }
 
+.feedback-box {
+  border: 1px solid #ccc;
+  padding: 10px;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow-y: auto;
+  max-height: 380px;
+  min-height: 380px;
+  flex-shrink: 0;
+}
+
 body {
   height: 100vh;
 }
@@ -249,20 +260,6 @@ button {
   gap: 20px;
 }
 
-.feedback-box,
-.additional-content {
-  height: 100%;
-  padding: 0;
-  margin: 0;
-  overflow-y: auto;
-}
-
-.feedback-box {
-  padding: 1rem;
-  border: 1px solid #808080; /* border-gray-150 */
-  border-radius: 0.25rem;
-  height: 100%;
-}
 
 .sidebar-button {
   width: 100%;
@@ -647,7 +644,6 @@ input {
 }
 
 .assignment-item pre {
-  color: black;
   white-space: pre-wrap;
 }
 
@@ -663,7 +659,9 @@ input {
 }
 
 .assignments-link {
-  color: black;
+  font-size: 20px;
+  font-weight: bold;
+  text-decoration:underline;
 }
 
 /* Custom radio buttons */

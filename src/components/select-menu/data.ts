@@ -65,6 +65,7 @@ Update Prompt with below:
 export const SubjectOptions: readonly SubjectOption[] = [
     { value: 'Biology', label: 'Biology', color: '#00B8D9'},
     { value: 'History', label: 'History', color: '#0052CC'},
+    { value: 'Custom', label: 'Custom', color: '#000000' },
     //{ value: 'purple', label: 'Purple', color: '#5243AA' },
     // { value: 'red', label: 'Red', color: '#FF5630', isFixed: true },
     // { value: 'orange', label: 'Orange', color: '#FF8B00' },

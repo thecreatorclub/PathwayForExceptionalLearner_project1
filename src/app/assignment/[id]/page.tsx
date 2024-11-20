@@ -1,27 +1,20 @@
+// AssignmentPage.tsx
 "use client";
-import React, {
-  useState,
-  useEffect,
-  useRef,
-  useCallback,
-  useMemo,
-  useLayoutEffect,
-} from "react";
+import React, { useState, useEffect, useRef,useCallback, useMemo,} from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import "./../../globals.css";
-import {
-  Accordion,
-  AccordionItem,
-  AccordionTrigger,
-  AccordionContent,
-} from "@/components/ui/accordion";
-import { PanelResizeHandle, Panel, PanelGroup } from "react-resizable-panels";
-import { Slate, Editable, withReact } from "slate-react";
-import { createEditor, Descendant, Text, Node, Path } from "slate";
+import { Accordion,AccordionItem, AccordionTrigger, AccordionContent,} from "@/components/ui/accordion";
+import { PanelResizeHandle, Panel, PanelGroup,} from "react-resizable-panels";
+import { Node, Path, Text, Descendant } from "slate";
 import { ModeToggle } from "@/components/dark-mode-toggle";
 import { ThemeProvider } from "@/components/theme-provider";
 import Link from "next/link";
+import SlateEditor from "./SlateEditor";
+import Improvements from "./Improvements";
+import { EventEmitter } from "./EventEmitter";
+import { escapeRegExp } from "./utils";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tab";
 
 interface Assignment {
   id: number;
@@ -39,10 +32,8 @@ export default function AssignmentPage({
 }: {
   params: { id: string };
 }) {
-  // Assignment state
+  // State and refs
   const [assignment, setAssignment] = useState<Assignment | null>(null);
-
-  // Other state variables
   const [learningOutcome, setLearningOutcome] = useState("");
   const [markingCriteria, setMarkingCriteria] = useState("");
   const [editorValue, setEditorValue] = useState<Descendant[]>([
@@ -57,12 +48,25 @@ export default function AssignmentPage({
   const [additionalPrompt, setAdditionalPrompt] = useState("");
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [errorList, setErrorList] = useState<
-    Array<{ id: string; originalText: string; improvementText: string; path: Path }>
+    Array<{
+      id: string;
+      originalText: string;
+      improvementText: string;
+      path: Path;
+      lineNumber?: number;
+    }>
   >([]);
+  const hoveredErrorIdRef = useRef<string | null>(null);
+  const [lineCount, setLineCount] = useState(1);
+  const [errorsUpdated, setErrorsUpdated] = useState(false);
+  const slateEditorRef = useRef<any>(null);
+  const improvementsRef = useRef<any>(null);
+  const isSyncingScroll = useRef(false);
+  const hoverEventEmitter = useMemo(() => new EventEmitter(), []);
 
-  // Bring back hoveredErrorId to the parent component
-  const [hoveredErrorId, setHoveredErrorId] = useState<string | null>(null);
+  const lineHeight = 20; // Define a shared line height
 
+  // Hooks
   useEffect(() => {
     const savedPrompt = localStorage.getItem("additionalPrompt");
     if (savedPrompt) {
@@ -70,7 +74,6 @@ export default function AssignmentPage({
     }
   }, []);
 
-  // Fetch assignment data
   useEffect(() => {
     fetch(`/api/assignment/${params.id}`)
       .then((res) => res.json())
@@ -81,167 +84,116 @@ export default function AssignmentPage({
       });
   }, [params.id]);
 
-  const SlateEditor = ({
-    value,
-    onChange,
-    errorList,
-    onHoverError,
-    hoveredErrorId,
-  }: {
-    value: Descendant[];
-    onChange: (value: Descendant[]) => void;
-    errorList: Array<{ id: string; originalText: string; path: Path }>;
-    onHoverError: (id: string | null) => void;
-    hoveredErrorId: string | null;
-  }) => {
-    const editor = useMemo(() => withReact(createEditor()), []);
+  useEffect(() => {
+    if (!feedback) {
+      setDisplayedFeedback("");
+      feedbackIndexRef.current = 0;
+      return;
+    }
 
-    const escapeRegExp = (string: string) => {
-      return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    };
+    setDisplayedFeedback("");
+    feedbackIndexRef.current = 0;
 
-    const decorate = useCallback(
-      ([node, path]: [Node, Path]) => {
-        const ranges: Array<{
-          anchor: { path: Path; offset: number };
-          focus: { path: Path; offset: number };
-          errorId: string;
-        }> = [];
-        if (!Text.isText(node)) {
-          return ranges;
-        }
+    const typeWriter = () => {
+      setDisplayedFeedback(feedback.slice(0, feedbackIndexRef.current + 1));
+      feedbackIndexRef.current += 1;
 
-        const { text } = node;
-
-        errorList.forEach((error) => {
-          const { id, originalText, path: errorPath } = error;
-
-          if (Path.equals(path, errorPath)) {
-            const regex = new RegExp(escapeRegExp(originalText), "gi");
-            let match;
-
-            while ((match = regex.exec(text)) !== null) {
-              ranges.push({
-                anchor: { path, offset: match.index },
-                focus: { path, offset: match.index + match[0].length },
-                errorId: id,
-              });
-            }
-          }
-        });
-
-        return ranges;
-      },
-      [errorList]
-    );
-
-    const renderLeaf = useCallback(
-      (props: { attributes: any; children: React.ReactNode; leaf: any }) => {
-        const { attributes, children, leaf } = props;
-
-        if (leaf.errorId) {
-          return (
-            <span
-              {...attributes}
-              style={{
-                backgroundColor:
-                  hoveredErrorId === leaf.errorId ? "yellow" : "lightyellow",
-              }}
-              onMouseEnter={() => onHoverError(leaf.errorId)}
-              onMouseLeave={() => onHoverError(null)}
-            >
-              {children}
-            </span>
-          );
-        }
-
-        return <span {...attributes}>{children}</span>;
-      },
-      [hoveredErrorId, onHoverError]
-    );
-
-    const handleChange = (newValue: Descendant[]) => {
-      if (newValue) {
-        onChange(newValue);
+      if (feedbackIndexRef.current < feedback.length) {
+        timeoutRef.current = setTimeout(typeWriter, 10);
       }
     };
 
-    return (
-      <Slate editor={editor} initialValue={value} onChange={handleChange}>
-        <Editable
-          decorate={decorate}
-          renderLeaf={renderLeaf}
-          placeholder="Enter student writing..."
-          style={{
-            border: "1px solid #ccc",
-            padding: "10px",
-            minHeight: "150px",
-            width: "100%",
-            fontFamily: "monospace",
-            whiteSpace: "pre-wrap",
-            wordWrap: "break-word",
-          }}
-        />
-      </Slate>
-    );
-  };
+    timeoutRef.current = setTimeout(typeWriter, 10);
 
-  const processStudentWriting = (
-    editorValue: Descendant[],
-    replacements: { originalText: string; improvementText: string }[]
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, [feedback]);
+
+  // Functions
+  const updateErrorLineNumbers = (
+    lineNumbers: { [errorId: string]: number }
   ) => {
-    let errorList: Array<{
-      id: string;
-      originalText: string;
-      improvementText: string;
-      path: Path;
-    }> = [];
-
-    for (const [node, path] of Node.nodes({ children: editorValue })) {
-      if (Text.isText(node)) {
-        const text = node.text;
-        replacements.forEach(({ originalText, improvementText }, errorIndex) => {
-          if (text.toLowerCase().includes(originalText.toLowerCase())) {
-            const id = `${Path.toString()}-${errorIndex}`;
-            errorList.push({
-              id,
-              originalText,
-              improvementText,
-              path,
-            });
-          }
-        });
-      }
-    }
-
-    return errorList;
+    setErrorList((prevErrorList) =>
+      prevErrorList.map((error) => ({
+        ...error,
+        lineNumber: lineNumbers[error.id],
+      }))
+    );
   };
 
-  const extractFeedback = (feedback: string) => {
-    const originalTextRegex =
-      /\*\*Original Text:\*\*\s*"([^"]+)"\s*<endoforiginal>/gi;
-    const improvementRegex =
-      /\*\*Improvement:\*\*\s*([\s\S]*?)<endofimprovement>/g;
+  const syncScrollPositions = useCallback(() => {
+    const editorContainer = slateEditorRef.current?.getContainer();
+    const improvementsContainer = improvementsRef.current?.getContainer();
 
-    const replacements = [];
+    if (!editorContainer || !improvementsContainer) return;
 
-    let matchOriginal;
-    let matchImprovement;
+    const onEditorScroll = () => {
+      if (isSyncingScroll.current) return;
+      isSyncingScroll.current = true;
 
-    while (
-      (matchOriginal = originalTextRegex.exec(feedback)) !== null &&
-      (matchImprovement = improvementRegex.exec(feedback)) !== null
+      const ratio =
+        editorContainer.scrollTop /
+        (editorContainer.scrollHeight - editorContainer.clientHeight);
+
+      console.log("Editor scrollTop:", editorContainer.scrollTop);
+      console.log("Editor scrollHeight:", editorContainer.scrollHeight);
+      console.log("Editor clientHeight:", editorContainer.clientHeight);
+      console.log("Editor scroll ratio:", ratio);
+
+      improvementsContainer.scrollTop =
+        ratio *
+        (improvementsContainer.scrollHeight -
+          improvementsContainer.clientHeight);
+
+      isSyncingScroll.current = false;
+    };
+
+    const onImprovementsScroll = () => {
+      if (isSyncingScroll.current) return;
+      isSyncingScroll.current = true;
+
+      const ratio =
+        improvementsContainer.scrollTop /
+        (improvementsContainer.scrollHeight -
+          improvementsContainer.clientHeight);
+
+      console.log("Improvements scrollTop:", improvementsContainer.scrollTop);
+      console.log("Improvements scrollHeight:", improvementsContainer.scrollHeight);
+      console.log("Improvements clientHeight:", improvementsContainer.clientHeight);
+      console.log("Improvements scroll ratio:", ratio);
+
+      editorContainer.scrollTop =
+        ratio *
+        (editorContainer.scrollHeight - editorContainer.clientHeight);
+
+      isSyncingScroll.current = false;
+    };
+
+    editorContainer.addEventListener("scroll", onEditorScroll);
+    improvementsContainer.addEventListener("scroll", onImprovementsScroll);
+
+    return () => {
+      editorContainer.removeEventListener("scroll", onEditorScroll);
+      improvementsContainer.removeEventListener(
+        "scroll",
+        onImprovementsScroll
+      );
+    };
+  }, []);
+
+  // Event handlers
+  async function handleSubmit() {
+    // Scroll the editor to the top when the button is clicked
+    if (
+      slateEditorRef.current &&
+      typeof slateEditorRef.current.scrollToTop === "function"
     ) {
-      const originalText = matchOriginal[1];
-      const improvementText = matchImprovement[1].trim();
-      replacements.push({ originalText, improvementText });
+      slateEditorRef.current.scrollToTop();
     }
 
-    const errorList = processStudentWriting(editorValue, replacements);
-    setErrorList(errorList);
-  };
-
-  const handleSubmit = async () => {
     setLoading(true);
     setFeedback("");
     setDisplayedFeedback("");
@@ -277,6 +229,9 @@ export default function AssignmentPage({
           )
           .replace(/\*\*Improvement:\*\*\s*[\s\S]*?<endofimprovement>/g, "");
         setFeedback(feedbackCleaned.trim());
+
+        // After processing feedback and updating the error list, synchronize scroll
+        syncScrollPositions();
       } else {
         setFeedback("Error: Unable to get feedback.");
       }
@@ -286,36 +241,84 @@ export default function AssignmentPage({
     } finally {
       setLoading(false);
     }
-  };
+  }
 
-  useEffect(() => {
-    if (!feedback) {
-      setDisplayedFeedback("");
-      feedbackIndexRef.current = 0;
-      return;
+  function extractFeedback(feedback: string) {
+    const originalTextRegex =
+      /\*\*Original Text:\*\*\s*"([^"]+)"\s*<endoforiginal>/gi;
+    const improvementRegex =
+      /\*\*Improvement:\*\*\s*([\s\S]*?)<endofimprovement>/g;
+
+    const replacements = [];
+
+    let matchOriginal;
+    let matchImprovement;
+
+    while (
+      (matchOriginal = originalTextRegex.exec(feedback)) !== null &&
+      (matchImprovement = improvementRegex.exec(feedback)) !== null
+    ) {
+      const originalText = matchOriginal[1];
+      const improvementText = matchImprovement[1].trim();
+      replacements.push({ originalText, improvementText });
     }
 
-    setDisplayedFeedback("");
-    feedbackIndexRef.current = 0;
+    console.log("Replacements extracted:", replacements);
 
-    const typeWriter = () => {
-      setDisplayedFeedback(feedback.slice(0, feedbackIndexRef.current + 1));
-      feedbackIndexRef.current += 1;
+    processStudentWriting(editorValue, replacements);
+  }
 
-      if (feedbackIndexRef.current < feedback.length) {
-        timeoutRef.current = setTimeout(typeWriter, 10);
+  function processStudentWriting(
+    editorValue: Descendant[],
+    replacements: { originalText: string; improvementText: string }[]
+  ) {
+    let errors: Array<{
+      id: string;
+      originalText: string;
+      improvementText: string;
+      path: Path;
+      lineNumber?: number;
+    }> = [];
+
+    for (const [node, path] of Node.nodes({ children: editorValue })) {
+      if (Text.isText(node)) {
+        const text = node.text;
+        replacements.forEach(
+          ({ originalText, improvementText }, errorIndex) => {
+            const regex = new RegExp(escapeRegExp(originalText), "gi");
+            let match;
+            let occurrenceIndex = 0;
+
+            while ((match = regex.exec(text)) !== null) {
+              const errorId = `${Path.toString()}-${path.join(
+                "."
+              )}-${errorIndex}-${occurrenceIndex}`;
+              console.log("Found match:", {
+                errorId,
+                originalText,
+                path,
+                matchIndex: match.index,
+              });
+              errors.push({
+                id: errorId,
+                originalText,
+                improvementText,
+                path,
+              });
+              occurrenceIndex++;
+            }
+          }
+        );
       }
-    };
+    }
 
-    timeoutRef.current = setTimeout(typeWriter, 10);
+    console.log("Error List after processing student writing:", errors);
 
-    return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-    };
-  }, [feedback]);
+    setErrorList(errors);
+    setErrorsUpdated(true); // Set the flag to true
+  }
 
+  // Now, move the conditional return after hooks
   if (!assignment) {
     return <p>Loading assignment details...</p>;
   }
@@ -328,8 +331,8 @@ export default function AssignmentPage({
           <Link href="/">
             <h1 style={{ cursor: "pointer" }}>Home</h1>
           </Link>
-            <h1 className="text-xl font-semibold ml-5">{assignment.title}</h1>
-            <h2 className="text-lg font-medium ml-5">{assignment.subject}</h2>
+          <h1 className="text-xl font-semibold ml-5">{assignment.title}</h1>
+          <h2 className="text-lg font-medium ml-5">{assignment.subject}</h2>
         </div>
         <div className="flex items-center space-x-4">
           <ThemeProvider>
@@ -347,39 +350,39 @@ export default function AssignmentPage({
             {/* Container 2: Learning Outcome and Marking Criteria */}
             <div className="container-2 w-full mb-5 border border-gray-400 p-4 rounded-lg">
               <Accordion type="single" collapsible>
-                    {/* Learning Outcome Accordion */}
-                      <AccordionItem value="learning-outcome">
-                        <AccordionTrigger
-                          style={{ borderBottom: "2px solid #a1a5ab" }}
-                        >
-                          Learning Outcome
-                        </AccordionTrigger>
-                        <AccordionContent>
-                            <textarea
-                              value={learningOutcome}
-                              readOnly
+                {/* Learning Outcome Accordion */}
+                <AccordionItem value="learning-outcome">
+                  <AccordionTrigger
+                    style={{ borderBottom: "2px solid #a1a5ab" }}
+                  >
+                    Learning Outcome
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <textarea
+                      value={learningOutcome}
+                      readOnly
                       rows={5}
                       className="textarea w-full p-2 border border-gray-200 rounded"
-                              placeholder="Enter learning outcomes here..."
-                            />
-                        </AccordionContent>
-                      </AccordionItem>
+                      placeholder="Enter learning outcomes here..."
+                    />
+                  </AccordionContent>
+                </AccordionItem>
 
-                    {/* Marking Criteria Accordion */}
-                      <AccordionItem value="marking-criteria">
-                        <AccordionTrigger
-                          style={{ borderBottom: "2px solid #a1a5ab" }}
-                        >
-                          Marking Criteria
-                        </AccordionTrigger>
-                        <AccordionContent>
-                            <textarea
-                              value={markingCriteria}
-                              readOnly
+                {/* Marking Criteria Accordion */}
+                <AccordionItem value="marking-criteria">
+                  <AccordionTrigger
+                    style={{ borderBottom: "2px solid #a1a5ab" }}
+                  >
+                    Marking Criteria
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <textarea
+                      value={markingCriteria}
+                      readOnly
                       rows={5}
-                              className="textarea w-full p-2 border border-gray-300 rounded"
-                              placeholder="Enter marking criteria here..."
-                            />
+                      className="textarea w-full p-2 border border-gray-300 rounded"
+                      placeholder="Enter marking criteria here..."
+                    />
                   </AccordionContent>
                 </AccordionItem>
 
@@ -397,10 +400,10 @@ export default function AssignmentPage({
                       rows={5}
                       className="textarea w-full p-2 border border-gray-300 rounded"
                     />
-                        </AccordionContent>
-                      </AccordionItem>
-                    </Accordion>
-                  </div>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+            </div>
 
             {/* Container 3: Student Writing and Feedback side by side */}
             <div className="flex flex-grow overflow-hidden">
@@ -410,94 +413,81 @@ export default function AssignmentPage({
                   className="p-4 flex flex-col flex-grow overflow-hidden"
                   style={{ minHeight: 0 }}
                 >
-                  <h2 className="text-lg font-semibold mb-2">
-                    Student Writing
-                  </h2>
                   <div
-                style={{
+                    style={{
                       flexGrow: 1,
                       overflowY: "auto",
                       minHeight: 0,
-                }}
-              >
-                    {/* Use the memoized SlateEditor */}
-                    <MemoizedSlateEditor
-                    value={editorValue}
-                    onChange={setEditorValue}
-                    errorList={errorList}
-                    onHoverError={setHoveredErrorId}
-                    hoveredErrorId={hoveredErrorId}
-                  />
-
+                    }}
+                  >
+                    <h2 className="text-lg">Student Writing</h2>
+                    {/* Use the SlateEditor */}
+                    <SlateEditor
+                      ref={slateEditorRef}
+                      value={editorValue}
+                      onChange={setEditorValue}
+                      errorList={errorList}
+                      onLineChange={setLineCount}
+                      errorsUpdated={errorsUpdated}
+                      setErrorsUpdated={setErrorsUpdated}
+                      updateErrorLineNumbers={updateErrorLineNumbers}
+                      hoveredErrorIdRef={hoveredErrorIdRef}
+                      hoverEventEmitter={hoverEventEmitter}
+                      lineHeight={lineHeight} // Pass lineHeight as a prop
+                    />
                   </div>
+                  {/* TEST Line Count */}
+                  {/* <p>Total number of lines: {lineCount}</p> */}
                   {/* Submit Button below Student Writing */}
                   <div className="mt-4">
                     <button
+                      className="btn"
                       onClick={handleSubmit}
-                      className="submit-button px-4 py-2 bg-blue-500 text-white rounded"
+                      disabled={loading}
                     >
                       Get Feedback
                     </button>
-                </div>
-              </Panel>
+                  </div>
+                </Panel>
 
-              {/* Resize Handle */}
-              <PanelResizeHandle className="w-1 bg-gray-200 cursor-col-resize" />
+                {/* Resize Handle */}
+                <PanelResizeHandle className="w-1 bg-gray-200 cursor-col-resize" />
 
                 {/* Right Panel: Feedback and Additional Feedback */}
-              <Panel
-                  className="p-4 flex flex-col flex-grow overflow-hidden"
-                  style={{ minHeight: 0 }}
-              >
-                <h2 className="text-lg font-semibold mb-2">Improvements</h2>
-
-                  {/* Improvements Section */}
-                <div
-                  className="improvement-box"
-                  style={{
-                    border: "1px solid #ccc",
-                    padding: "10px",
-                    fontFamily: "monospace",
-                    whiteSpace: "pre-wrap",
-                    wordWrap: "break-word",
-                      overflowY: "auto",
-                      maxHeight: "200px",
-                      flexShrink: 0,
-                  }}
-                >
-                  {errorList.map((error) => (
-                    <div
-                      key={error.id}
-                      style={{
-                        backgroundColor:
-                          hoveredErrorId === error.id ? "yellow" : "transparent",
-                      }}
-                      onMouseEnter={() => setHoveredErrorId(error.id)}
-                      onMouseLeave={() => setHoveredErrorId(null)}
-                    >
-                      {error.improvementText}
+                <Panel className="p-4 flex flex-col flex-grow overflow-hidden" style={{ minHeight: 0 }}>
+                <Tabs defaultValue="Line-Feedback" className="w-full">
+                  <TabsList>
+                    <TabsTrigger value="Line-Feedback">Line Feedback</TabsTrigger>
+                    <TabsTrigger value="Additional-Feedback">Additional Feedback</TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="Line-Feedback">
+                    {/* Improvements Section */}
+                    <Improvements
+                      ref={improvementsRef}
+                      errorList={errorList}
+                      lineCount={lineCount}
+                      hoveredErrorIdRef={hoveredErrorIdRef}
+                      hoverEventEmitter={hoverEventEmitter}
+                      lineHeight={lineHeight} // Pass lineHeight as a prop
+                    />
+                  </TabsContent>
+                  <TabsContent value="Additional-Feedback">
+                    {/* Move the Additional Feedback section here */}
+                    <div className="flex-grow" style={{ maxHeight: "200px" }}>
+                      <div className="feedback-box overflow-y-auto">
+                        {loading ? (
+                          <div className="loading">Generating feedback...</div>
+                        ) : (
+                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                              {displayedFeedback.replace("Areas of Improvement: ", "**Areas of Improvement:**").replace("Areas of Improvement: \n\n", "**Areas of Improvement:**")}
+                            </ReactMarkdown>
+                        )}
+                      </div>
                     </div>
-                    
-                  ))}
-                </div>
-                  {/* Feedback Section */}
-                  <h2 className="text-lg font-semibold mb-2">
-                    Additional Feedback
-                  </h2>
-                  <div
-                    className="feedback-box flex-grow overflow-y-auto"
-                    style={{ maxHeight: "200px" }}
-                  >
-                    {loading ? (
-                      <div className="loading">Generating feedback...</div>
-                    ) : (
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                        {displayedFeedback}
-                      </ReactMarkdown>
-                    )}
-                  </div>
-              </Panel>
-            </PanelGroup>
+                  </TabsContent>
+                </Tabs>
+                </Panel>
+              </PanelGroup>
             </div>
           </div>
         </main>
