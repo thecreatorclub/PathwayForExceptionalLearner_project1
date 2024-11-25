@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import Papa from "papaparse";
 import "/src/app/globals.css";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
@@ -17,7 +17,9 @@ const UploadCSV = () => {
   const [criteria, setCriteria] = useState("");
   const [students, setStudents] = useState<Student[]>([]);
   const [criteriaSubmitted, setCriteriaSubmitted] = useState(false);
-  const [loading, setLoading] = useState(false); // New state
+  const [loading, setLoading] = useState(false);
+
+  const markingCriteriaPanelRef = useRef<any>(null); // Ref for the panel
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files) {
@@ -56,16 +58,14 @@ const UploadCSV = () => {
                 console.log(parsedData);
 
                 // Update the students state with parsed data
-                const newStudents = parsedData
-                  .slice(1)
-                  .map((row: any, index: number) => {
-                    return {
-                      studentID: row[0],
-                      question: row[1],
-                      response: row[2],
-                      feedback: res.message.split("/n")[index],
-                    };
-                  });
+                const newStudents = parsedData.slice(1).map((row: any, index: number) => {
+                  return {
+                    studentID: row[0],
+                    question: row[1],
+                    response: row[2],
+                    feedback: res.message.split("/n")[index],
+                  };
+                });
                 setStudents(newStudents);
                 setCriteriaSubmitted(true); // Set criteria submitted to true
                 setLoading(false);
@@ -80,6 +80,13 @@ const UploadCSV = () => {
     }
   };
 
+  // Collapse the Marking Criteria panel when criteriaSubmitted is true
+  useEffect(() => {
+    if (criteriaSubmitted && markingCriteriaPanelRef.current) {
+      markingCriteriaPanelRef.current.collapse();
+    }
+  }, [criteriaSubmitted]);
+
   return (
     <div className=" mx-auto h-full w-full ">
       <PanelGroup direction="horizontal">
@@ -91,15 +98,15 @@ const UploadCSV = () => {
                 <h2 className="text-xl font-semibold mb-4">Questions</h2>
                 <div className="flex-1 overflow-auto">
                   {students.length > 0 ? (
-                    Array.from(
-                      new Set(students.map((student) => student.question))
-                    ).map((question, index) => (
-                      <div key={index} className="mb-4">
-                        <p>
-                          <strong>Question {index + 1}:</strong> {question}
-                        </p>
-                      </div>
-                    ))
+                    Array.from(new Set(students.map((student) => student.question))).map(
+                      (question, index) => (
+                        <div key={index} className="mb-4">
+                          <p>
+                            <strong>Question {index + 1}:</strong> {question}
+                          </p>
+                        </div>
+                      )
+                    )
                   ) : (
                     <p>No questions available. Please upload a CSV file.</p>
                   )}
@@ -113,25 +120,25 @@ const UploadCSV = () => {
                 <h2 className="text-xl font-semibold mb-4">Student Answers</h2>
                 <div className="flex-1 overflow-auto">
                   {students.length > 0 ? (
-                    Array.from(
-                      new Set(students.map((student) => student.studentID))
-                    ).map((studentID) => (
-                      <div key={studentID} className="mb-4">
-                        <h3 className="text-lg font-semibold">
-                          Student ID: {studentID}
-                        </h3>
-                        {students
-                          .filter((student) => student.studentID === studentID)
-                          .map((student, index) => (
-                            <div key={index} className="ml-4 mb-2">
-                              <p>
-                                <strong>Answer {index + 1}:</strong>{" "}
-                                {student.response}
-                              </p>
-                            </div>
-                          ))}
-                      </div>
-                    ))
+                    Array.from(new Set(students.map((student) => student.studentID))).map(
+                      (studentID) => (
+                        <div key={studentID} className="mb-4">
+                          <h3 className="text-lg font-semibold">
+                            Student ID: {studentID}
+                          </h3>
+                          {students
+                            .filter((student) => student.studentID === studentID)
+                            .map((student, index) => (
+                              <div key={index} className="ml-4 mb-2">
+                                <p>
+                                  <strong>Answer {index + 1}:</strong>{" "}
+                                  {student.response}
+                                </p>
+                              </div>
+                            ))}
+                        </div>
+                      )
+                    )
                   ) : (
                     <p>
                       No student answers available. Please upload a CSV file.
@@ -146,9 +153,13 @@ const UploadCSV = () => {
         <Panel defaultSize={50}>
           <PanelGroup direction="vertical">
             {/* Marking Criteria Section - Top Right */}
-            <Panel defaultSize={50} order={1} minSize={10} collapsible>
-              {" "}
-              {/* Adjust size dynamically */}
+            <Panel
+              defaultSize={50}
+              order={1}
+              minSize={10}
+              collapsible
+              ref={markingCriteriaPanelRef} // Attach the ref here
+            >
               <div className="border p-4 shadow-md rounded-md flex flex-col h-full">
                 <h2 className="text-xl font-semibold mb-4 ">Marking Criteria</h2>
                 <input
@@ -176,15 +187,12 @@ const UploadCSV = () => {
             </Panel>
             <PanelResizeHandle className="h-1 bg-gray-200 cursor-row-resize" />
             {/* Feedback Section - Bottom Right */}
-            <Panel order={2} defaultSize={50}>
-              {/* Adjust size dynamically */}
+            <Panel collapsible order={2} defaultSize={50}>
               <div className="border p-4 shadow-md rounded-md flex flex-col h-full">
                 <h2 className="text-xl font-semibold mb-4">Feedback</h2>
                 <div className="flex-1 overflow-auto">
                   {students.length > 0 ? (
-                    Array.from(
-                      new Set(students.map((student) => student.studentID))
-                    )
+                    Array.from(new Set(students.map((student) => student.studentID)))
                       .sort((a, b) => a - b)
                       .map((studentID) => (
                         <div key={studentID} className="mb-4">
@@ -192,15 +200,11 @@ const UploadCSV = () => {
                             Student ID: {studentID}
                           </h3>
                           {students
-                            .filter(
-                              (student) => student.studentID === studentID
-                            )
+                            .filter((student) => student.studentID === studentID)
                             .map((student, index) => (
                               <div key={index} className="ml-4 mb-2">
                                 <p>
-                                  <strong>
-                                    Feedback for Question {index + 1}:
-                                  </strong>{" "}
+                                  <strong>Feedback for Question {index + 1}:</strong>{" "}
                                   {student.feedback}
                                 </p>
                               </div>
@@ -209,8 +213,7 @@ const UploadCSV = () => {
                       ))
                   ) : (
                     <p>
-                      No feedback available. Please upload and submit a CSV
-                      file.
+                      No feedback available. Please upload and submit a CSV file.
                     </p>
                   )}
                 </div>
