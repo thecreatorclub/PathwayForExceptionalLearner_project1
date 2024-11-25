@@ -18,14 +18,13 @@ export async function POST(request: NextRequest) {
       {
         role: "system",
         content: `
-You are a tutor at university marking papers, you must provide concise feedback with a mark out of 0-5.
+You are a tutor at university marking papers, you must provide concise and insightful feedback with a mark out of 0-5. You must provide the reason on why you gave that mark, this is all to help the teacher give the student the best feedback possible.
 
 Instructions:
 - Read the student's response to the question.
 - Provide feedback based on the marking criteria provided.
 - Give a mark out of 5 based on the student's response.(eg full marks if correct, 0 if completely wrong)
-
-Do the above for each new line (/n)
+- After each feedback you provide make a new line (/n)
         `,
       },
       { role: "user", content: prompt },
