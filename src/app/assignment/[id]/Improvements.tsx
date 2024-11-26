@@ -14,16 +14,21 @@ interface ImprovementsProps {
     id: string;
     originalText: string;
     improvementText: string;
-    lineNumber?: number;
+    offsetTop?: number;
+    height?: number;
   }>;
-  lineCount: number;
   hoveredErrorIdRef: React.MutableRefObject<string | null>;
   hoverEventEmitter: EventEmitter;
-  lineHeight: number; // Add lineHeight to props
+  editorContentHeight: number;
 }
 
 const Improvements = forwardRef((props: ImprovementsProps, ref) => {
-  const { errorList, lineCount, hoveredErrorIdRef, hoverEventEmitter, lineHeight } = props;
+  const {
+    errorList,
+    hoveredErrorIdRef,
+    hoverEventEmitter,
+    editorContentHeight,
+  } = props;
   const { theme } = useTheme();
   const [localHoveredErrorId, setLocalHoveredErrorId] = useState<
     string | null
@@ -46,64 +51,77 @@ const Improvements = forwardRef((props: ImprovementsProps, ref) => {
     getContainer: () => containerRef.current,
   }));
 
+  useEffect(() => {
+    console.log(
+      "Improvements Editor Content Height:",
+      editorContentHeight
+    );
+  }, [editorContentHeight]);
+
   return (
     <div
       ref={containerRef}
-      className="improvement-box"
+      className="improvements-content"
       style={{
+        boxSizing: "border-box",
+        position: "relative",
         border: "1px solid #ccc",
         padding: "10px",
+        fontFamily: "monospace",
         whiteSpace: "pre-wrap",
         wordWrap: "break-word",
+        overflowWrap: "break-word",
         overflowY: "auto",
         maxHeight: "380px",
         minHeight: "380px",
         flexShrink: 0,
-        lineHeight: `${lineHeight}px`, // Apply the same lineHeight
       }}
     >
-      {Array.from({ length: lineCount }).map((_, index) => {
-        const lineNumber = index + 1;
-        const improvementsForLine = errorList
-          .filter((error) => error.lineNumber === lineNumber)
-          .map((error) => (
-            <span
-              key={error.id}
+      <div
+        style={{
+          position: "relative",
+          height: `${editorContentHeight}px`,
+        }}
+      >
+        {errorList.map((error) => (
+          <div
+            key={error.id}
+            style={{
+              position: "absolute",
+              top: error.offsetTop,
+              left: 0,
+              right: 0,
+              height: error.height,
+              overflow: "hidden",
+            }}
+            onMouseEnter={() => {
+              hoveredErrorIdRef.current = error.id;
+              hoverEventEmitter.emit("hoverChange", error.id);
+            }}
+            onMouseLeave={() => {
+              hoveredErrorIdRef.current = null;
+              hoverEventEmitter.emit("hoverChange", null);
+            }}
+          >
+            <div
               style={{
                 fontFamily: "monospace",
                 fontSize: "13px",
                 backgroundColor:
                   localHoveredErrorId === error.id
                     ? theme === "dark"
-                      ? "#6BAC68" // Hovered color in dark mode
-                      : "yellow"  // Hovered color in light mode
-                    : theme === "dark"
-                      ? "transparent" // Default color in dark mode
-                      : "transparent", // Default color in light mode
-              }}
-              onMouseEnter={() => {
-                hoveredErrorIdRef.current = error.id;
-                hoverEventEmitter.emit("hoverChange", error.id);
-              }}
-              onMouseLeave={() => {
-                hoveredErrorIdRef.current = null;
-                hoverEventEmitter.emit("hoverChange", null);
+                      ? "#6BAC68"
+                      : "yellow"
+                    : "transparent",
+                wordWrap: "break-word",
+                whiteSpace: "pre-wrap",
               }}
             >
               {error.improvementText}
-            </span>
-          ));
-
-        return (
-          <div key={lineNumber}>
-            {improvementsForLine.length > 0 ? (
-              improvementsForLine
-            ) : (
-              <br />
-            )}
+            </div>
           </div>
-        );
-      })}
+        ))}
+      </div>
     </div>
   );
 });

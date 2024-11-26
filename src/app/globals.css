@@ -82,7 +82,6 @@
     background-color: #57595a;
     color: white;
   }
-  
 
   * {
     border: var(--border);
@@ -99,8 +98,8 @@
   white-space: pre-wrap;
   word-wrap: break-word;
   overflow-y: auto;
-  max-height: 380px;
-  min-height: 380px;
+  max-height: 100px;
+  min-height: 100px;
   flex-shrink: 0;
 }
 
@@ -188,7 +187,6 @@ button {
   font-size: 16px;
 }
 
-
 .loading {
   font-size: 14px;
   color: #999;
@@ -260,7 +258,6 @@ button {
   gap: 20px;
 }
 
-
 .sidebar-button {
   width: 100%;
   padding: 10px;
@@ -314,7 +311,7 @@ button {
   border-radius: 5px;
 }
 
-/*side nav bar*/
+/* Side nav bar */
 .sidenav {
   height: 100%;
   width: 0; /* Start with width 0 to be hidden initially */
@@ -594,6 +591,14 @@ body {
   max-width: 55%;
 }
 
+.dark .assignment-form,
+.dark .assignment-list {
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(255, 255, 255, 0.1);
+  flex: 1;
+}
+
 h1,
 h2 {
   font-size: 1.5rem;
@@ -622,18 +627,6 @@ input {
   box-sizing: border-box;
 }
 
-/* .submit-button {
-  padding: 10px 20px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  margin-right: 20px;
-}
-
-.submit-button:hover {
-  background-color: #005bb5;
-} */
-
 .assignment-item {
   display: flex;
   flex-direction: column;
@@ -661,7 +654,7 @@ input {
 .assignments-link {
   font-size: 20px;
   font-weight: bold;
-  text-decoration:underline;
+  text-decoration: underline;
 }
 
 /* Custom radio buttons */
@@ -766,4 +759,94 @@ input {
 .accordion-content {
   padding: 0;
   margin: 0;
+}
+
+/* Existing styles remain unchanged */
+
+/* Mentions Input Styles */
+.mentions {
+  width: 100%;
+  font-size: 14px;
+  overflow-y: auto;
+  background-color: var(--input);
+  color: var(--foreground);
+  position: relative;
+}
+
+.mentions__mention {
+  background-color: #e6f3ff;
+  color: #000;
+}
+
+.mentions.read-only {
+  color: #999;
+  overflow-y: auto;
+}
+
+.dark .mentions.read-only {
+  background-color: #57595a;
+  color: white;
+}
+
+.dark .mentions__mention {
+  background-color: #9bb2c9;
+  color: #000;
+}
+
+
+.suggestions-container {
+  position: absolute;
+  z-index: 1000;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  max-height: 150px;
+  overflow-y: auto;
+  width: 100%;
+}
+
+.suggestion-item {
+  padding: 5px 10px;
+  cursor: pointer;
+}
+
+.suggestion-item.focused {
+  background-color: #cee4e5;
+}
+
+.dark .mentions {
+  background-color: #57595a;
+  color: white;
+}
+
+.dark .suggestions-container {
+  background-color: #57595a;
+  color: white;
+}
+
+.dark .suggestion-item.focused {
+  background-color: #808080;
+}
+
+/* Additional styles to ensure the mentions input looks good */
+.form-group {
+  position: relative;
+}
+
+.additional-prompt-page {
+  width: 100%;
+  height: 100px;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: var(--background);
+  color: var(--foreground);
+  font-size: 14px;
+  resize: none;
+  overflow-y: auto;
+}
+
+.dark .additional-prompt-page {
+  background-color: #57595a;
+  color: white;
+  border-color: #ffffff;
 }

@@ -1,24 +1,19 @@
 // EventEmitter.ts
 export class EventEmitter {
-    private listeners: { [key: string]: Function[] } = {};
-  
-    on(event: string, fn: Function) {
-      if (!this.listeners[event]) {
-        this.listeners[event] = [];
-      }
-      this.listeners[event].push(fn);
-    }
-  
-    off(event: string, fn: Function) {
-      if (!this.listeners[event]) return;
-      this.listeners[event] = this.listeners[event].filter(
-        (listener) => listener !== fn
-      );
-    }
-  
-    emit(event: string, data?: any) {
-      if (!this.listeners[event]) return;
-      this.listeners[event].forEach((fn) => fn(data));
-    }
+  private events: { [key: string]: Function[] } = {};
+
+  on(event: string, listener: Function) {
+    if (!this.events[event]) this.events[event] = [];
+    this.events[event].push(listener);
   }
-  
+
+  off(event: string, listener: Function) {
+    if (!this.events[event]) return;
+    this.events[event] = this.events[event].filter((l) => l !== listener);
+  }
+
+  emit(event: string, ...args: any[]) {
+    if (!this.events[event]) return;
+    this.events[event].forEach((listener) => listener(...args));
+  }
+}

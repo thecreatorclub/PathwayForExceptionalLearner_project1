@@ -1,11 +1,20 @@
 // AssignmentPage.tsx
 "use client";
-import React, { useState, useEffect, useRef,useCallback, useMemo,} from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import "./../../globals.css";
-import { Accordion,AccordionItem, AccordionTrigger, AccordionContent,} from "@/components/ui/accordion";
-import { PanelResizeHandle, Panel, PanelGroup,} from "react-resizable-panels";
+import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from "@/components/ui/accordion";
+import {
+  PanelResizeHandle,
+  Panel,
+  PanelGroup,
+} from "react-resizable-panels";
 import { Node, Path, Text, Descendant } from "slate";
 import { ModeToggle } from "@/components/dark-mode-toggle";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -14,7 +23,7 @@ import SlateEditor from "./SlateEditor";
 import Improvements from "./Improvements";
 import { EventEmitter } from "./EventEmitter";
 import { escapeRegExp } from "./utils";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tab";
+import { renderMentions } from "../../../utils/renderMentions";
 
 interface Assignment {
   id: number;
@@ -53,18 +62,18 @@ export default function AssignmentPage({
       originalText: string;
       improvementText: string;
       path: Path;
-      lineNumber?: number;
+      offsetTop?: number;
+      height?: number; // Store the height of the corresponding text block
     }>
   >([]);
   const hoveredErrorIdRef = useRef<string | null>(null);
-  const [lineCount, setLineCount] = useState(1);
   const [errorsUpdated, setErrorsUpdated] = useState(false);
   const slateEditorRef = useRef<any>(null);
   const improvementsRef = useRef<any>(null);
   const isSyncingScroll = useRef(false);
   const hoverEventEmitter = useMemo(() => new EventEmitter(), []);
 
-  const lineHeight = 20; // Define a shared line height
+  const [editorContentHeight, setEditorContentHeight] = useState<number>(0);
 
   // Hooks
   useEffect(() => {
@@ -81,6 +90,7 @@ export default function AssignmentPage({
         setAssignment(data);
         setLearningOutcome(data.learningOutcomes);
         setMarkingCriteria(data.markingCriteria);
+        setAdditionalPrompt(data.additionalPrompt);
       });
   }, [params.id]);
 
@@ -113,13 +123,14 @@ export default function AssignmentPage({
   }, [feedback]);
 
   // Functions
-  const updateErrorLineNumbers = (
-    lineNumbers: { [errorId: string]: number }
+  const updateErrorPositions = (
+    positions: { [errorId: string]: { offsetTop: number; height: number } }
   ) => {
     setErrorList((prevErrorList) =>
       prevErrorList.map((error) => ({
         ...error,
-        lineNumber: lineNumbers[error.id],
+        offsetTop: positions[error.id]?.offsetTop,
+        height: positions[error.id]?.height,
       }))
     );
   };
@@ -134,19 +145,7 @@ export default function AssignmentPage({
       if (isSyncingScroll.current) return;
       isSyncingScroll.current = true;
 
-      const ratio =
-        editorContainer.scrollTop /
-        (editorContainer.scrollHeight - editorContainer.clientHeight);
-
-      console.log("Editor scrollTop:", editorContainer.scrollTop);
-      console.log("Editor scrollHeight:", editorContainer.scrollHeight);
-      console.log("Editor clientHeight:", editorContainer.clientHeight);
-      console.log("Editor scroll ratio:", ratio);
-
-      improvementsContainer.scrollTop =
-        ratio *
-        (improvementsContainer.scrollHeight -
-          improvementsContainer.clientHeight);
+      improvementsContainer.scrollTop = editorContainer.scrollTop;
 
       isSyncingScroll.current = false;
     };
@@ -155,19 +154,7 @@ export default function AssignmentPage({
       if (isSyncingScroll.current) return;
       isSyncingScroll.current = true;
 
-      const ratio =
-        improvementsContainer.scrollTop /
-        (improvementsContainer.scrollHeight -
-          improvementsContainer.clientHeight);
-
-      console.log("Improvements scrollTop:", improvementsContainer.scrollTop);
-      console.log("Improvements scrollHeight:", improvementsContainer.scrollHeight);
-      console.log("Improvements clientHeight:", improvementsContainer.clientHeight);
-      console.log("Improvements scroll ratio:", ratio);
-
-      editorContainer.scrollTop =
-        ratio *
-        (editorContainer.scrollHeight - editorContainer.clientHeight);
+      editorContainer.scrollTop = improvementsContainer.scrollTop;
 
       isSyncingScroll.current = false;
     };
@@ -183,6 +170,13 @@ export default function AssignmentPage({
       );
     };
   }, []);
+
+  useEffect(() => {
+    const cleanup = syncScrollPositions();
+    return () => {
+      if (cleanup) cleanup();
+    };
+  }, [syncScrollPositions]);
 
   // Event handlers
   async function handleSubmit() {
@@ -277,7 +271,8 @@ export default function AssignmentPage({
       originalText: string;
       improvementText: string;
       path: Path;
-      lineNumber?: number;
+      offsetTop?: number;
+      height?: number;
     }> = [];
 
     for (const [node, path] of Node.nodes({ children: editorValue })) {
@@ -338,8 +333,6 @@ export default function AssignmentPage({
           <ThemeProvider>
             <ModeToggle />
           </ThemeProvider>
-          {/* Replace PopoverDemo with your component or remove if not needed */}
-          {/* <PopoverDemo initialText={assignment.additionalPrompt} /> */}
         </div>
       </header>
 
@@ -355,7 +348,7 @@ export default function AssignmentPage({
                   <AccordionTrigger
                     style={{ borderBottom: "2px solid #a1a5ab" }}
                   >
-                    Learning Outcome
+                    Learning Outcome, Marking Criteria and Additional Prompt
                   </AccordionTrigger>
                   <AccordionContent>
                     <textarea
@@ -365,41 +358,17 @@ export default function AssignmentPage({
                       className="textarea w-full p-2 border border-gray-200 rounded"
                       placeholder="Enter learning outcomes here..."
                     />
-                  </AccordionContent>
-                </AccordionItem>
-
-                {/* Marking Criteria Accordion */}
-                <AccordionItem value="marking-criteria">
-                  <AccordionTrigger
-                    style={{ borderBottom: "2px solid #a1a5ab" }}
-                  >
-                    Marking Criteria
-                  </AccordionTrigger>
-                  <AccordionContent>
                     <textarea
                       value={markingCriteria}
                       readOnly
-                      rows={5}
+                      rows={6}
                       className="textarea w-full p-2 border border-gray-300 rounded"
                       placeholder="Enter marking criteria here..."
                     />
-                  </AccordionContent>
-                </AccordionItem>
-
-                {/* Additional Prompt */}
-                <AccordionItem value="Additional Prompt">
-                  <AccordionTrigger
-                    style={{ borderBottom: "2px solid #a1a5ab" }}
-                  >
-                    Additional Prompt
-                  </AccordionTrigger>
-                  <AccordionContent>
-                    <textarea
-                      value={assignment.additionalPrompt}
-                      readOnly
-                      rows={5}
-                      className="textarea w-full p-2 border border-gray-300 rounded"
-                    />
+                    {/* Updated Additional Prompt Display */}
+                    <div className="additional-prompt-page read-only">
+                      {renderMentions(additionalPrompt)}
+                    </div>
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
@@ -427,17 +396,14 @@ export default function AssignmentPage({
                       value={editorValue}
                       onChange={setEditorValue}
                       errorList={errorList}
-                      onLineChange={setLineCount}
                       errorsUpdated={errorsUpdated}
                       setErrorsUpdated={setErrorsUpdated}
-                      updateErrorLineNumbers={updateErrorLineNumbers}
+                      updateErrorPositions={updateErrorPositions}
                       hoveredErrorIdRef={hoveredErrorIdRef}
                       hoverEventEmitter={hoverEventEmitter}
-                      lineHeight={lineHeight} // Pass lineHeight as a prop
+                      onContentHeightChange={setEditorContentHeight}
                     />
                   </div>
-                  {/* TEST Line Count */}
-                  {/* <p>Total number of lines: {lineCount}</p> */}
                   {/* Submit Button below Student Writing */}
                   <div className="mt-4">
                     <button
@@ -454,38 +420,44 @@ export default function AssignmentPage({
                 <PanelResizeHandle className="w-1 bg-gray-200 cursor-col-resize" />
 
                 {/* Right Panel: Feedback and Additional Feedback */}
-                <Panel className="p-4 flex flex-col flex-grow overflow-hidden" style={{ minHeight: 0 }}>
-                <Tabs defaultValue="Line-Feedback" className="w-full">
-                  <TabsList>
-                    <TabsTrigger value="Line-Feedback">Line Feedback</TabsTrigger>
-                    <TabsTrigger value="Additional-Feedback">Additional Feedback</TabsTrigger>
-                  </TabsList>
-                  <TabsContent value="Line-Feedback">
-                    {/* Improvements Section */}
-                    <Improvements
-                      ref={improvementsRef}
-                      errorList={errorList}
-                      lineCount={lineCount}
-                      hoveredErrorIdRef={hoveredErrorIdRef}
-                      hoverEventEmitter={hoverEventEmitter}
-                      lineHeight={lineHeight} // Pass lineHeight as a prop
-                    />
-                  </TabsContent>
-                  <TabsContent value="Additional-Feedback">
-                    {/* Move the Additional Feedback section here */}
-                    <div className="flex-grow" style={{ maxHeight: "200px" }}>
-                      <div className="feedback-box overflow-y-auto">
-                        {loading ? (
-                          <div className="loading">Generating feedback...</div>
-                        ) : (
-                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                              {displayedFeedback.replace("Areas of Improvement: ", "**Areas of Improvement:**").replace("Areas of Improvement: \n\n", "**Areas of Improvement:**")}
-                            </ReactMarkdown>
-                        )}
-                      </div>
+                <Panel
+                  className="p-4 flex flex-col flex-grow overflow-hidden"
+                  style={{ minHeight: 0 }}
+                >
+                  <h2 className="text-lg">Improvements</h2>
+                  {/* Improvements Section */}
+                  <Improvements
+                    ref={improvementsRef}
+                    errorList={errorList}
+                    hoveredErrorIdRef={hoveredErrorIdRef}
+                    hoverEventEmitter={hoverEventEmitter}
+                    editorContentHeight={editorContentHeight}
+                  />
+                  {/* Additional Feedback section */}
+                  <div
+                    className="flex-grow"
+                    style={{ maxHeight: "100px" }}
+                  >
+                    <div className="feedback-box">
+                      {loading ? (
+                        <div className="loading">
+                          Generating feedback...
+                        </div>
+                      ) : (
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                          {displayedFeedback
+                            .replace(
+                              "Areas of Improvement: ",
+                              "**Areas of Improvement:**"
+                            )
+                            .replace(
+                              "Areas of Improvement: \n\n",
+                              "**Areas of Improvement:**"
+                            )}
+                        </ReactMarkdown>
+                      )}
                     </div>
-                  </TabsContent>
-                </Tabs>
+                  </div>
                 </Panel>
               </PanelGroup>
             </div>

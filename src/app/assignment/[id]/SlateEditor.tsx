@@ -5,7 +5,6 @@ import React, {
   useImperativeHandle,
   useCallback,
   useEffect,
-  useState,
 } from "react";
 import { Slate, Editable, withReact } from "slate-react";
 import { createEditor, Descendant, Text, Node, Path } from "slate";
@@ -21,17 +20,15 @@ interface SlateEditorProps {
     originalText: string;
     improvementText: string;
     path: Path;
-    lineNumber?: number;
   }>;
-  onLineChange?: (lineCount: number) => void;
   errorsUpdated: boolean;
   setErrorsUpdated: (value: boolean) => void;
-  updateErrorLineNumbers: (
-    lineNumbers: { [errorId: string]: number }
+  updateErrorPositions: (
+    positions: { [errorId: string]: { offsetTop: number; height: number } }
   ) => void;
   hoveredErrorIdRef: React.MutableRefObject<string | null>;
   hoverEventEmitter: EventEmitter;
-  lineHeight: number; // Add lineHeight to props
+  onContentHeightChange?: (height: number) => void;
 }
 
 const SlateEditor = forwardRef((props: SlateEditorProps, ref) => {
@@ -39,35 +36,18 @@ const SlateEditor = forwardRef((props: SlateEditorProps, ref) => {
     value,
     onChange,
     errorList,
-    onLineChange,
     errorsUpdated,
     setErrorsUpdated,
-    updateErrorLineNumbers,
+    updateErrorPositions,
     hoveredErrorIdRef,
     hoverEventEmitter,
-    lineHeight, // Destructure lineHeight
+    onContentHeightChange,
   } = props;
 
   const { theme } = useTheme();
   const editor = useRef(withReact(createEditor())).current;
   const containerRef = useRef<HTMLDivElement>(null);
-  const lineHeightRef = useRef<number>(20);
   const errorSpanRefs = useRef<{ [key: string]: HTMLElement | null }>({});
-  const [localHoveredErrorId, setLocalHoveredErrorId] = useState<
-    string | null
-  >(null);
-
-  useEffect(() => {
-    const handleHoverChange = (id: string | null) => {
-      setLocalHoveredErrorId(id);
-    };
-
-    hoverEventEmitter.on("hoverChange", handleHoverChange);
-
-    return () => {
-      hoverEventEmitter.off("hoverChange", handleHoverChange);
-    };
-  }, [hoverEventEmitter]);
 
   useImperativeHandle(ref, () => ({
     scrollToTop: () => {
@@ -124,16 +104,16 @@ const SlateEditor = forwardRef((props: SlateEditorProps, ref) => {
       const { attributes, children, leaf } = props;
 
       if (leaf.errorId) {
-        const isHovered = localHoveredErrorId === leaf.errorId;
+        const isHovered = hoveredErrorIdRef.current === leaf.errorId;
         const isDarkMode = theme === "dark";
 
         const backgroundColor = isHovered
           ? isDarkMode
             ? "#6BAC68" // Hovered color in dark mode
-            : "yellow"   // Hovered color in light mode
+            : "yellow" // Hovered color in light mode
           : isDarkMode
-            ? "#144D14"  // Default color in dark mode
-            : "lightyellow"; // Default color in light mode
+          ? "#144D14" // Default color in dark mode
+          : "lightyellow"; // Default color in light mode
 
         return (
           <span
@@ -162,7 +142,7 @@ const SlateEditor = forwardRef((props: SlateEditorProps, ref) => {
 
       return <span {...attributes}>{children}</span>;
     },
-    [localHoveredErrorId, hoverEventEmitter, hoveredErrorIdRef, theme]
+    [hoveredErrorIdRef, hoverEventEmitter, theme]
   );
 
   const handleChange = (newValue: Descendant[]) => {
@@ -174,45 +154,50 @@ const SlateEditor = forwardRef((props: SlateEditorProps, ref) => {
   useEffect(() => {
     if (errorsUpdated && containerRef.current) {
       const editorElement = containerRef.current;
-      const height = editorElement.scrollHeight;
-      const computedStyle = getComputedStyle(editorElement);
-      let lineHeight = parseFloat(computedStyle.lineHeight);
-      if (isNaN(lineHeight)) {
-        lineHeight = lineHeightRef.current;
-      }
-      const currentLineCount = Math.round(height / lineHeight);
-      if (onLineChange) {
-        onLineChange(currentLineCount);
-      }
 
-      const lineNumbers: { [errorId: string]: number } = {};
+      const errorPositions: {
+        [errorId: string]: { offsetTop: number; height: number };
+      } = {};
       Object.keys(errorSpanRefs.current).forEach((errorOccurrenceId) => {
         const spanElement = errorSpanRefs.current[errorOccurrenceId];
         if (spanElement) {
           const offsetTop =
             spanElement.getBoundingClientRect().top -
-            editorElement.getBoundingClientRect().top;
-          const lineNumber = Math.floor(offsetTop / lineHeight) + 1;
-          lineNumbers[errorOccurrenceId] = lineNumber;
+            editorElement.getBoundingClientRect().top +
+            editorElement.scrollTop;
+            console.log("Scrollheight: " + spanElement.scrollHeight);
+          const height = spanElement.getBoundingClientRect().height;
+          errorPositions[errorOccurrenceId] = { offsetTop, height };
         }
       });
 
-      updateErrorLineNumbers(lineNumbers);
+      console.log("Error Positions:", errorPositions);
+
+      updateErrorPositions(errorPositions);
       setErrorsUpdated(false);
     }
   }, [
     errorsUpdated,
-    onLineChange,
     setErrorsUpdated,
-    updateErrorLineNumbers,
+    updateErrorPositions,
     errorSpanRefs,
   ]);
+
+  useEffect(() => {
+    if (containerRef.current && onContentHeightChange) {
+      const contentHeight = containerRef.current.scrollHeight;
+      console.log("Editor Content Height:", contentHeight);
+      onContentHeightChange(contentHeight);
+    }
+  }, [value, errorsUpdated, onContentHeightChange]);
 
   return (
     <Slate editor={editor} initialValue={value} onChange={handleChange}>
       <div
         ref={containerRef}
+        className="editor-content"
         style={{
+          boxSizing: "border-box",
           border: "1px solid #ccc",
           padding: "10px",
           minHeight: "380px",
@@ -221,7 +206,6 @@ const SlateEditor = forwardRef((props: SlateEditorProps, ref) => {
           whiteSpace: "pre-wrap",
           wordWrap: "break-word",
           overflowWrap: "break-word",
-          lineHeight: `${lineHeight}px`, // Use the passed lineHeight
           overflowY: "auto",
           maxHeight: "380px",
         }}
@@ -232,11 +216,6 @@ const SlateEditor = forwardRef((props: SlateEditorProps, ref) => {
           placeholder="Enter student writing..."
           style={{
             outline: "none",
-          }}
-          onKeyDown={(event) => {
-            if (event.key === "Enter") {
-              console.log("Enter key pressed");
-            }
           }}
         />
       </div>
