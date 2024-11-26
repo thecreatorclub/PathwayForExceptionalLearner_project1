@@ -24,7 +24,11 @@ Instructions:
 - Read the student's response to the question.
 - Provide feedback based on the marking criteria provided.
 - Give a mark out of 5 based on the student's response.(eg full marks if correct, 0 if completely wrong)
-- After each feedback you provide make a new line (/n)
+
+Example: 
+2/5 - The explanation of symmetric encryption is mostly correct, but the claim that it is not secure for communication is misleading. Asymmetric encryption is not inherently more secure in all contexts, and the response lacks depth in explaining the implications of each type.
+1/5 - ... 
+Note: Your response should only have a single new line between each feedback.
         `,
       },
       { role: "user", content: prompt },
