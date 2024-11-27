@@ -3,10 +3,10 @@ import { NextResponse, NextRequest } from "next/server";
 export async function POST(request: NextRequest) {
     
   try {
-    const { Criteria, line } = await request.json();
-    console.log(Criteria, line);
+    const { Criteria, question, answer } = await request.json();
+    console.log(Criteria, question, answer);
     const prompt = `
-    Question and Students response ( For each /n give feedback, ignore studentID): ${line}
+    Question and Students response ( For each /n give feedback, ignore studentID): ${question} ${answer}
 
     Marking Criteria:
     ---

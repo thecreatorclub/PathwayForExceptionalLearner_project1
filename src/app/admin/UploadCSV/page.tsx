@@ -4,7 +4,7 @@ import React, { useState, useRef, useEffect } from "react";
 import Papa from "papaparse";
 import "/src/app/globals.css";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
-
+import pLimit from "p-limit";
 interface Student {
   studentID: number;
   question: string;
@@ -29,54 +29,82 @@ const UploadCSV = () => {
   };
 
   // Handle form submission to upload and process CSV file
+
+  const processBatchWithLimit = async (
+    batch: any[][], // Array of rows, each row being an array of values
+    limit: (fn: () => Promise<any>) => Promise<any> // Limit function from p-limit
+  ): Promise<Student[]> => {
+    const requests = batch.map((row: any[]) =>
+      limit(async () => {
+        const [studentID, question, response] = row; // Destructure the row
+        
+        try {
+          console.log("Sending to API:", { row }); // Debug log
+          const apiResponse = await fetch("/api/CSV", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              studentID: JSON.stringify(row[0]),
+              question: JSON.stringify(row[1]),
+              answer: JSON.stringify(row[2]),
+              criteria,
+            }),
+          });
+
+          if (apiResponse.ok) {
+            const res = await apiResponse.json();
+            return {
+              studentID: parseInt(studentID), // Ensure correct type
+              question,
+              response,
+              feedback: res.message,
+            };
+          } else {
+            console.error(`Error processing question: ${question}`);
+            return null;
+          }
+        } catch (error) {
+          console.error(`Error for question: ${question}`, error);
+          return null;
+        }
+      })
+    );
+
+    const results = await Promise.all(requests); // Resolve all requests
+    return results.filter((result): result is Student => result !== null); // Filter non-null results
+  };
+
   const handleSubmit = async () => {
-    setLoading(true);
     if (file) {
       const reader = new FileReader();
       reader.readAsText(file);
       reader.onload = async (e) => {
         const text = e.target?.result as string;
 
-        try {
-          const response = await fetch("/api/CSV", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              line: text,
-              criteria,
-            }),
-          });
+        Papa.parse(text, {
+          header: false,
+          skipEmptyLines: true,
+          complete: async (results) => {
+            const parsedData: any[][] = results.data.slice(1) as any[][]; // Skip header
+            const batchSize = 10; // Number of rows per batch
+            const limit = pLimit(5); // Limit 5 concurrent requests
 
-          if (response.ok) {
-            const res = await response.json();
-            console.log(res.message);
-            // Parse the CSV content using PapaParse
-            Papa.parse(text, {
-              header: false,
-              skipEmptyLines: true,
-              complete: (results) => {
-                const parsedData = results.data;
-                // Map parsed data to Student objects
-                const newStudents = parsedData
-                  .slice(1)
-                  .map((row: any, index: number) => {
-                    return {
-                      studentID: row[0],
-                      question: row[1],
-                      response: row[2],
-                      feedback: res.message.split("\n\n")[index],
-                    };
-                  });
-                setStudents(newStudents);
-                setCriteriaSubmitted(true);
-                setLoading(false);
-              },
-            });
-          }
-        } catch (error) {
-          setLoading(false);
-          console.error("Error fetching feedback:", error);
-        }
+            const batches: any[][][] = [];
+            for (let i = 0; i < parsedData.length; i += batchSize) {
+              batches.push(parsedData.slice(i, i + batchSize));
+            }
+
+            let allResults: Student[] = []; // Initialize as an empty array
+            for (const batch of batches) {
+              const batchResults = await processBatchWithLimit(batch, limit);
+              allResults = [...allResults, ...batchResults]; // Append results
+            }
+
+            setStudents(allResults); // Set students in state
+            setCriteriaSubmitted(true);
+            setLoading(false);
+          },
+        });
       };
     }
   };
