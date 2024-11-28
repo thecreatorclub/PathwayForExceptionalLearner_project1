@@ -34,80 +34,83 @@ const UploadCSV = () => {
     batch: any[][], // Array of rows, each row being an array of values
     limit: (fn: () => Promise<any>) => Promise<any> // Limit function from p-limit
   ): Promise<Student[]> => {
-    const requests = batch.map((row: any[]) =>
-      limit(async () => {
-        const [studentID, question, response] = row; // Destructure the row
+    // Use limit to ensure the entire batch is processed in one API call
+    return limit(async () => {
+      try {
+        console.log("Sending to API:", { batch }); // Debug log
         
-        try {
-          console.log("Sending to API:", { row }); // Debug log
-          const apiResponse = await fetch("/api/CSV", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              studentID: JSON.stringify(row[0]),
-              question: JSON.stringify(row[1]),
-              answer: JSON.stringify(row[2]),
-              criteria,
-            }),
-          });
-
-          if (apiResponse.ok) {
-            const res = await apiResponse.json();
+        const apiResponse = await fetch("/api/CSV", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            batch,
+            criteria, // Assuming criteria is defined in the outer scope
+          }),
+        });
+  
+        if (apiResponse.ok) {
+          const res = await apiResponse.json();
+          console.log("API Response:", res.message); // Debug log
+  
+          // Map response to an array of Student objects
+          return batch.map((row, index) => {
+            const [studentID, question, response] = row;
             return {
               studentID: parseInt(studentID), // Ensure correct type
               question,
               response,
-              feedback: res.message,
+              feedback: res.message.split("\n\n")[index], // Split by double newline
             };
-          } else {
-            console.error(`Error processing question: ${question}`);
-            return null;
-          }
-        } catch (error) {
-          console.error(`Error for question: ${question}`, error);
-          return null;
+          });
+        } else {
+          console.error(`Error processing batch`);
+          return [];
         }
-      })
-    );
-
-    const results = await Promise.all(requests); // Resolve all requests
-    return results.filter((result): result is Student => result !== null); // Filter non-null results
+      } catch (error) {
+        console.error(`Error processing batch`, error);
+        return [];
+      }
+    });
   };
+  
 
   const handleSubmit = async () => {
-    if (file) {
-      const reader = new FileReader();
-      reader.readAsText(file);
-      reader.onload = async (e) => {
-        const text = e.target?.result as string;
+  if (file) {
+    const reader = new FileReader();
+    reader.readAsText(file);
+    reader.onload = async (e) => {
+      const text = e.target?.result as string;
 
-        Papa.parse(text, {
-          header: false,
-          skipEmptyLines: true,
-          complete: async (results) => {
-            const parsedData: any[][] = results.data.slice(1) as any[][]; // Skip header
-            const batchSize = 10; // Number of rows per batch
-            const limit = pLimit(5); // Limit 5 concurrent requests
+      Papa.parse(text, {
+        header: false,
+        skipEmptyLines: true,
+        complete: async (results) => {
+          const parsedData: any[][] = results.data.slice(1) as any[][]; // Skip header
+          const batchSize = 10; // Number of rows per batch
+          const limit = pLimit(5); // Limit 5 concurrent requests
 
-            const batches: any[][][] = [];
-            for (let i = 0; i < parsedData.length; i += batchSize) {
-              batches.push(parsedData.slice(i, i + batchSize));
-            }
+          const batches: any[][][] = [];
+          for (let i = 0; i < parsedData.length; i += batchSize) {
+            batches.push(parsedData.slice(i, i + batchSize));
+          }
 
-            let allResults: Student[] = []; // Initialize as an empty array
-            for (const batch of batches) {
-              const batchResults = await processBatchWithLimit(batch, limit);
-              allResults = [...allResults, ...batchResults]; // Append results
-            }
+          // Process all batches concurrently with the defined limit
+          const allResults = (
+            await Promise.all(
+              batches.map((batch) =>
+                processBatchWithLimit(batch, limit) // Process each batch with limit
+              )
+            )
+          ).flat(); // Flatten the results into a single array
 
-            setStudents(allResults); // Set students in state
-            setCriteriaSubmitted(true);
-            setLoading(false);
-          },
-        });
-      };
-    }
-  };
+          setStudents(allResults); // Set students in state
+          setCriteriaSubmitted(true);
+          setLoading(false);
+        },
+      });
+    };
+  }
+};
 
   // Collapse the Marking Criteria panel when criteria is submitted
   useEffect(() => {
