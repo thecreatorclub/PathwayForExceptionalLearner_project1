@@ -1,4 +1,3 @@
-// Improvements.tsx
 import React, {
   forwardRef,
   useRef,
@@ -30,9 +29,9 @@ const Improvements = forwardRef((props: ImprovementsProps, ref) => {
     editorContentHeight,
   } = props;
   const { theme } = useTheme();
-  const [localHoveredErrorId, setLocalHoveredErrorId] = useState<
-    string | null
-  >(null);
+  const [localHoveredErrorId, setLocalHoveredErrorId] = useState<string | null>(
+    null
+  );
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -52,10 +51,9 @@ const Improvements = forwardRef((props: ImprovementsProps, ref) => {
   }));
 
   useEffect(() => {
-    console.log(
-      "Improvements Editor Content Height:",
-      editorContentHeight
-    );
+    if (containerRef.current) {
+      containerRef.current.scrollTop = containerRef.current.scrollHeight;
+    }
   }, [editorContentHeight]);
 
   return (

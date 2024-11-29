@@ -1,4 +1,3 @@
-// AssignmentPage.tsx
 "use client";
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import ReactMarkdown from "react-markdown";
@@ -180,7 +179,6 @@ export default function AssignmentPage({
 
   // Event handlers
   async function handleSubmit() {
-    // Scroll the editor to the top when the button is clicked
     if (
       slateEditorRef.current &&
       typeof slateEditorRef.current.scrollToTop === "function"
@@ -224,7 +222,6 @@ export default function AssignmentPage({
           .replace(/\*\*Improvement:\*\*\s*[\s\S]*?<endofimprovement>/g, "");
         setFeedback(feedbackCleaned.trim());
 
-        // After processing feedback and updating the error list, synchronize scroll
         syncScrollPositions();
       } else {
         setFeedback("Error: Unable to get feedback.");
@@ -313,7 +310,6 @@ export default function AssignmentPage({
     setErrorsUpdated(true); // Set the flag to true
   }
 
-  // Now, move the conditional return after hooks
   if (!assignment) {
     return <p>Loading assignment details...</p>;
   }

@@ -4,7 +4,7 @@ import chroma from 'chroma-js';
 import { SubjectOption, SubjectOptions } from './data';
 import Select, { StylesConfig, CSSObjectWithLabel } from 'react-select';
 
-const colourStyles: StylesConfig<SubjectOption, true> = {
+const colourStyles: StylesConfig<SubjectOption, false> = {
   control: (styles: any) => ({ ...styles, backgroundColor: 'white' }),
   option: (styles, { data, isDisabled, isFocused, isSelected }) => {
     const color = chroma(data.color);
@@ -63,11 +63,11 @@ interface SelectMenuProps {
 }
 
 const SelectMenu: React.FC<SelectMenuProps> = ({ onChange, value }) => (
-  <Select
+  <Select<SubjectOption, false>
     closeMenuOnSelect={true}
     options={SubjectOptions}
     styles={colourStyles}
-    onChange={onChange}
+    onChange={(newValue) => onChange(newValue)}
     value={value}
   />
 );

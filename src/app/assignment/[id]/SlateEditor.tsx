@@ -1,4 +1,3 @@
-// SlateEditor.tsx
 import React, {
   forwardRef,
   useRef,
@@ -65,9 +64,7 @@ const SlateEditor = forwardRef((props: SlateEditorProps, ref) => {
         focus: { path: Path; offset: number };
         errorId: string;
       }> = [];
-      if (!Text.isText(node)) {
-        return ranges;
-      }
+      if (!Text.isText(node)) return ranges;
 
       const { text } = node;
 
@@ -100,37 +97,31 @@ const SlateEditor = forwardRef((props: SlateEditorProps, ref) => {
   );
 
   const renderLeaf = useCallback(
-    (props: { attributes: any; children: React.ReactNode; leaf: any }) => {
-      const { attributes, children, leaf } = props;
-
+    ({ attributes, children, leaf }: any) => {
       if (leaf.errorId) {
         const isHovered = hoveredErrorIdRef.current === leaf.errorId;
         const isDarkMode = theme === "dark";
 
         const backgroundColor = isHovered
           ? isDarkMode
-            ? "#6BAC68" // Hovered color in dark mode
-            : "yellow" // Hovered color in light mode
+            ? "#6BAC68"
+            : "yellow"
           : isDarkMode
-          ? "#144D14" // Default color in dark mode
-          : "lightyellow"; // Default color in light mode
+          ? "#144D14"
+          : "lightyellow";
 
         return (
           <span
             {...attributes}
             ref={(el) => {
-              if (el) {
-                errorSpanRefs.current[leaf.errorId] = el;
-              }
+              if (el) errorSpanRefs.current[leaf.errorId] = el;
             }}
             style={{ backgroundColor }}
-            onMouseEnter={(e) => {
-              e.stopPropagation();
+            onMouseEnter={() => {
               hoveredErrorIdRef.current = leaf.errorId;
               hoverEventEmitter.emit("hoverChange", leaf.errorId);
             }}
-            onMouseLeave={(e) => {
-              e.stopPropagation();
+            onMouseLeave={() => {
               hoveredErrorIdRef.current = null;
               hoverEventEmitter.emit("hoverChange", null);
             }}
@@ -165,30 +156,31 @@ const SlateEditor = forwardRef((props: SlateEditorProps, ref) => {
             spanElement.getBoundingClientRect().top -
             editorElement.getBoundingClientRect().top +
             editorElement.scrollTop;
-            console.log("Scrollheight: " + spanElement.scrollHeight);
           const height = spanElement.getBoundingClientRect().height;
           errorPositions[errorOccurrenceId] = { offsetTop, height };
         }
       });
 
-      console.log("Error Positions:", errorPositions);
-
       updateErrorPositions(errorPositions);
       setErrorsUpdated(false);
     }
-  }, [
-    errorsUpdated,
-    setErrorsUpdated,
-    updateErrorPositions,
-    errorSpanRefs,
-  ]);
+  }, [errorsUpdated, setErrorsUpdated, updateErrorPositions, errorSpanRefs]);
 
   useEffect(() => {
-    if (containerRef.current && onContentHeightChange) {
-      const contentHeight = containerRef.current.scrollHeight;
-      console.log("Editor Content Height:", contentHeight);
-      onContentHeightChange(contentHeight);
+    const updateHeight = () => {
+      if (containerRef.current && onContentHeightChange) {
+        const contentHeight = containerRef.current.scrollHeight;
+        onContentHeightChange(contentHeight);
+      }
+    };
+
+    updateHeight();
+    const observer = new MutationObserver(updateHeight);
+    if (containerRef.current) {
+      observer.observe(containerRef.current, { childList: true, subtree: true });
     }
+
+    return () => observer.disconnect();
   }, [value, errorsUpdated, onContentHeightChange]);
 
   return (
@@ -214,9 +206,7 @@ const SlateEditor = forwardRef((props: SlateEditorProps, ref) => {
           decorate={decorate}
           renderLeaf={renderLeaf}
           placeholder="Enter student writing..."
-          style={{
-            outline: "none",
-          }}
+          style={{ outline: "none" }}
         />
       </div>
     </Slate>
