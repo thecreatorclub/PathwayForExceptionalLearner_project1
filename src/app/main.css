@@ -1,0 +1,5 @@
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
+@next /next/no-img-element;
+@import url("https://fonts.googleapis.com/css2?family=Italianno&display=swap");

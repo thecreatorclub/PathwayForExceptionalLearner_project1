@@ -1,9 +1,7 @@
-"use client";
-
-import { useState, useEffect } from "react";
-import Link from "next/link";
 import { ModeToggle } from "@/components/dark-mode-toggle";
 import { ThemeProvider } from "@/components/theme-provider";
+import Link from "next/link";
+import { getAssignments } from "../api/assignment/route";
 
 interface Assignment {
   id: number;
@@ -15,91 +13,25 @@ interface Assignment {
   updatedAt: string;
 }
 
-export default function AssignmentListPage() {
-  const [assignments, setAssignments] = useState<Assignment[]>([]);
-  const [title, setTitle] = useState("");
-  const [subject, setSubject] = useState("");
-  const [learningOutcomes, setLearningOutcomes] = useState("");
-  const [markingCriteria, setMarkingCriteria] = useState("");
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
-
+export default async function AssignmentListPage() {
   // Fetch all assignments
-  useEffect(() => {
-    fetch("/api/assignment")
-      .then((res) => res.json())
-      .then((data) => setAssignments(data))
-      .catch((err) => console.error("Error fetching assignments", err));
-  }, []);
-
-  // Handle form submission to add a new assignment
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!title || !subject || !learningOutcomes || !markingCriteria) {
-      setErrorMessage("Please fill in all fields");
-      return;
-    }
-
-    try {
-      const response = await fetch("/api/assignment", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          title,
-          subject,
-          learningOutcomes,
-          markingCriteria,
-        }),
-      });
-
-      if (response.ok) {
-        const newAssignment = await response.json();
-        // Append the new assignment to the state
-        setAssignments([...assignments, newAssignment]);
-        setTitle("");
-        setSubject("");
-        setLearningOutcomes("");
-        setMarkingCriteria("");
-        setErrorMessage(null);
-        setSuccessMessage("Assignment added successfully!");
-      } else {
-        setErrorMessage("Failed to add assignment");
-      }
-    } catch (error) {
-      setErrorMessage("An error occurred while adding the assignment");
-    }
-  };
-
-  // Handle delete action
-  const handleDelete = async (id: number) => {
-    try {
-      const response = await fetch(`/api/assignment/${id}`, {
-        method: "DELETE",
-      });
-
-      if (response.ok) {
-        setAssignments(
-          assignments.filter((assignment) => assignment.id !== id)
-        );
-        setSuccessMessage("Assignment deleted successfully!");
-      } else {
-        setErrorMessage("Failed to delete assignment");
-      }
-    } catch (error) {
-      setErrorMessage("An error occurred while deleting the assignment");
-    }
-  };
+  const assignments = await getAssignments();
 
   return (
     <div className="assignment-page">
       <div className="assignment-container">
         <div className="assignment-list">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
             <Link href="/">
-              <h1 style={{ cursor: "pointer" }}>Home</h1>
+              <h1 className=" text-xl" style={{ cursor: "pointer" }}>
+                Home
+              </h1>
             </Link>
             <ThemeProvider>
               <ModeToggle />

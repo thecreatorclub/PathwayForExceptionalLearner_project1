@@ -1,11 +1,8 @@
 "use client";
-import Image from "next/image";
+import { Button, Heading, Radio } from "@radix-ui/themes";
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
-import "./globals.css";
-import logo from "./logofromfigma.png";
-import { ModeToggle } from "@/components/dark-mode-toggle";
-import { ThemeProvider } from "@/components/theme-provider";
+import "./main.css";
 
 const Page: React.FC = () => {
   const [isClient, setIsClient] = useState(false);
@@ -41,35 +38,23 @@ const Page: React.FC = () => {
   };
 
   return (
-    <div className="page-container">
-      <header className="header">
-        <div className="logo-container">
-          <Image
-            src={logo}
-            alt="Logo"
-            className="logo"
-            width={100}
-            height={100}
-          />
-          <span className="logo-text">&quot;We are Learners&quot;</span>
-        </div>
-        <ThemeProvider>
-          <ModeToggle />
-          </ThemeProvider>
-      </header>
-      <section className="intro-container">
-        <h1 className="intro-page-head">Empower your assignment with AI</h1>
-        <p className="intro-page-para-head">
+    <div className="h-full flex justify-center items-center">
+      <section className="max-w-3xl flex flex-col gap-2 items-center">
+        <Heading as="h1">Empower your assignment with AI</Heading>
+        <p className="text-center">
           Our AI Assistant helps high school students excel in their studies by
           providing personalized feedback, expert advice, and secure document
           storage.
         </p>
 
         {/* Radio Button Implementation */}
-        <form className="radio-container">
-          <label className="radio-label">
-            <input
-              type="radio"
+        <form className="py-4">
+          <label
+            htmlFor="students"
+            className="flex items-center gap-2 cursor-pointer"
+          >
+            <Radio
+              id="students"
               value="Students"
               checked={selectedOption === "Students"}
               onChange={handleOptionChange}
@@ -77,9 +62,12 @@ const Page: React.FC = () => {
             Student
           </label>
 
-          <label className="radio-label">
-            <input
-              type="radio"
+          <label
+            htmlFor="teachers"
+            className="flex items-center gap-2 cursor-pointer"
+          >
+            <Radio
+              id="teachers"
               value="Teachers"
               checked={selectedOption === "Teachers"}
               onChange={handleOptionChange}
@@ -91,9 +79,9 @@ const Page: React.FC = () => {
         {/* Conditional rendering based on selected option */}
         {selectedOption && (
           <Link href={getRedirectUrl()}>
-            <button className="intro-page-button">
+            <Button className="cursor-pointer">
               Proceed to {selectedOption}
-            </button>
+            </Button>
           </Link>
         )}
       </section>
