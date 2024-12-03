@@ -1,5 +1,11 @@
 "use client";
-import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+} from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import "./../../globals.css";
@@ -9,11 +15,7 @@ import {
   AccordionTrigger,
   AccordionContent,
 } from "@/components/ui/accordion";
-import {
-  PanelResizeHandle,
-  Panel,
-  PanelGroup,
-} from "react-resizable-panels";
+import { PanelResizeHandle, Panel, PanelGroup } from "react-resizable-panels";
 import { Node, Path, Text, Descendant } from "slate";
 import { ModeToggle } from "@/components/dark-mode-toggle";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -23,6 +25,15 @@ import Improvements from "./Improvements";
 import { EventEmitter } from "./EventEmitter";
 import { escapeRegExp } from "./utils";
 import { renderMentions } from "../../../utils/renderMentions";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
+import { usePathname } from "next/navigation";
 
 interface Assignment {
   id: number;
@@ -35,12 +46,9 @@ interface Assignment {
   updatedAt: string;
 }
 
-export default function AssignmentPage({
-  params,
-}: {
-  params: { id: string };
-}) {
+export default function AssignmentPage({ params }: { params: { id: string } }) {
   // State and refs
+  const pathname = usePathname();
   const [assignment, setAssignment] = useState<Assignment | null>(null);
   const [learningOutcome, setLearningOutcome] = useState("");
   const [markingCriteria, setMarkingCriteria] = useState("");
@@ -122,9 +130,9 @@ export default function AssignmentPage({
   }, [feedback]);
 
   // Functions
-  const updateErrorPositions = (
-    positions: { [errorId: string]: { offsetTop: number; height: number } }
-  ) => {
+  const updateErrorPositions = (positions: {
+    [errorId: string]: { offsetTop: number; height: number };
+  }) => {
     setErrorList((prevErrorList) =>
       prevErrorList.map((error) => ({
         ...error,
@@ -163,10 +171,7 @@ export default function AssignmentPage({
 
     return () => {
       editorContainer.removeEventListener("scroll", onEditorScroll);
-      improvementsContainer.removeEventListener(
-        "scroll",
-        onImprovementsScroll
-      );
+      improvementsContainer.removeEventListener("scroll", onImprovementsScroll);
     };
   }, []);
 
@@ -215,10 +220,7 @@ export default function AssignmentPage({
         extractFeedback(data.message || "No feedback received.");
 
         const feedbackCleaned = data.message
-          .replace(
-            /\*\*Original Text:\*\*\s*"([^"]+)"\s*<endoforiginal>/gi,
-            ""
-          )
+          .replace(/\*\*Original Text:\*\*\s*"([^"]+)"\s*<endoforiginal>/gi, "")
           .replace(/\*\*Improvement:\*\*\s*[\s\S]*?<endofimprovement>/g, "");
         setFeedback(feedbackCleaned.trim());
 
@@ -338,6 +340,32 @@ export default function AssignmentPage({
           <div className="flex flex-col flex-grow space-y-4">
             {/* Container 2: Learning Outcome and Marking Criteria */}
             <div className="container-2 w-full mb-5 border border-gray-400 p-4 rounded-lg">
+              <Breadcrumb>
+                <BreadcrumbList>
+                  <BreadcrumbItem>
+                    <BreadcrumbLink href="/">Home</BreadcrumbLink>
+                  </BreadcrumbItem>
+                  <BreadcrumbSeparator />
+                  {pathname.startsWith("/admin") && (
+                    <>
+                      <BreadcrumbItem>
+                        <BreadcrumbLink href="/admin">Admin</BreadcrumbLink>
+                      </BreadcrumbItem>
+                      <BreadcrumbSeparator />
+                    </>
+                  )}
+                  <BreadcrumbItem>
+                    <BreadcrumbLink href="/assignments">
+                      Assignments
+                    </BreadcrumbLink>
+                  </BreadcrumbItem>
+                  <BreadcrumbSeparator />
+                  <BreadcrumbItem>
+                    <BreadcrumbPage>{params.id}</BreadcrumbPage>
+                  </BreadcrumbItem>
+                </BreadcrumbList>
+              </Breadcrumb>
+
               <Accordion type="single" collapsible>
                 {/* Learning Outcome Accordion */}
                 <AccordionItem value="learning-outcome">
@@ -430,15 +458,10 @@ export default function AssignmentPage({
                     editorContentHeight={editorContentHeight}
                   />
                   {/* Additional Feedback section */}
-                  <div
-                    className="flex-grow"
-                    style={{ maxHeight: "100px" }}
-                  >
+                  <div className="flex-grow" style={{ maxHeight: "100px" }}>
                     <div className="feedback-box">
                       {loading ? (
-                        <div className="loading">
-                          Generating feedback...
-                        </div>
+                        <div className="loading">Generating feedback...</div>
                       ) : (
                         <ReactMarkdown remarkPlugins={[remarkGfm]}>
                           {displayedFeedback

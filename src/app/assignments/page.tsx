@@ -4,6 +4,14 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ModeToggle } from "@/components/dark-mode-toggle";
 import { ThemeProvider } from "@/components/theme-provider";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 
 interface Assignment {
   id: number;
@@ -97,7 +105,13 @@ export default function AssignmentListPage() {
     <div className="assignment-page">
       <div className="assignment-container">
         <div className="assignment-list">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
             <Link href="/">
               <h1 style={{ cursor: "pointer" }}>Home</h1>
             </Link>
@@ -105,6 +119,18 @@ export default function AssignmentListPage() {
               <ModeToggle />
             </ThemeProvider>
           </div>
+          {/* Breadcrumb */}
+          <Breadcrumb>
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <BreadcrumbLink href="/">Home</BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbPage>Assignments</BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
           <h2>Assignment List</h2>
           <ul>
             {assignments.map((assignment) => (

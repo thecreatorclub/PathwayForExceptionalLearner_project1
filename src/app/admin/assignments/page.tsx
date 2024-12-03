@@ -2,11 +2,25 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import SelectMenu from '@/components/select-menu/selectmenu';
-import { SubjectOptions, Biology, History, SubjectOption } from '@/components/select-menu/data';
-import { MentionsInput, Mention, SuggestionDataItem } from 'react-mentions';
+import SelectMenu from "@/components/select-menu/selectmenu";
+import {
+  SubjectOptions,
+  Biology,
+  History,
+  SubjectOption,
+} from "@/components/select-menu/data";
+import { MentionsInput, Mention, SuggestionDataItem } from "react-mentions";
 import { ModeToggle } from "@/components/dark-mode-toggle";
 import { ThemeProvider } from "@/components/theme-provider";
+import { usePathname } from "next/navigation";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 
 interface Assignment {
   id: number;
@@ -21,6 +35,7 @@ interface Assignment {
 
 export default function AssignmentListPage() {
   const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const pathname = usePathname();
   const [title, setTitle] = useState("");
   const [subject, setSubject] = useState("");
   const [learningOutcomes, setLearningOutcomes] = useState("");
@@ -32,7 +47,9 @@ export default function AssignmentListPage() {
     null
   );
   const [showForm, setShowForm] = useState(false);
-  const [selectedSubject, setSelectedSubject] = useState<SubjectOption | null>(null);
+  const [selectedSubject, setSelectedSubject] = useState<SubjectOption | null>(
+    null
+  );
 
   // Fetch all assignments
   useEffect(() => {
@@ -45,8 +62,8 @@ export default function AssignmentListPage() {
   // Process template tags into full template texts
   const processTemplateText = (text: string) => {
     const templateMap: { [key: string]: string } = {
-      'biology-prompt': Biology,
-      'history-prompt': History,
+      "biology-prompt": Biology,
+      "history-prompt": History,
       // Add more templates as needed
     };
 
@@ -60,12 +77,12 @@ export default function AssignmentListPage() {
   const handleSubjectChange = (selectedOption: SubjectOption | null) => {
     // Check if current subject is 'Custom' and user is changing to a different subject
     if (
-      subject === 'Custom' &&
+      subject === "Custom" &&
       selectedOption &&
-      selectedOption.value !== 'Custom'
+      selectedOption.value !== "Custom"
     ) {
       const confirmChange = window.confirm(
-        'Changing the subject will reset your additional prompt. Do you want to proceed?'
+        "Changing the subject will reset your additional prompt. Do you want to proceed?"
       );
 
       if (!confirmChange) {
@@ -73,25 +90,25 @@ export default function AssignmentListPage() {
         return;
       } else {
         // Reset the additionalPrompt
-        setAdditionalPrompt('');
+        setAdditionalPrompt("");
       }
     }
 
     setSelectedSubject(selectedOption);
-    setSubject(selectedOption ? selectedOption.value : '');
+    setSubject(selectedOption ? selectedOption.value : "");
 
     if (selectedOption) {
-      if (selectedOption.value === 'Biology') {
+      if (selectedOption.value === "Biology") {
         // Set the Additional Prompt to the mention tag for Biology
         setAdditionalPrompt(`@[biology-prompt](biology-prompt)`);
-      } else if (selectedOption.value === 'History') {
+      } else if (selectedOption.value === "History") {
         // Set the Additional Prompt to the mention tag for History
         setAdditionalPrompt(`@[history-prompt](history-prompt)`);
-      } else if (selectedOption.value === 'Custom') {
-        setAdditionalPrompt(''); // Leave empty for custom input
+      } else if (selectedOption.value === "Custom") {
+        setAdditionalPrompt(""); // Leave empty for custom input
       }
     } else {
-      setAdditionalPrompt('');
+      setAdditionalPrompt("");
     }
   };
 
@@ -106,19 +123,29 @@ export default function AssignmentListPage() {
 
     // Show a warning if using Custom subject with mention tags
     if (
-      selectedSubject?.value === 'Custom' &&
+      selectedSubject?.value === "Custom" &&
       /@\[([^\]]+)\]\(([^)]+)\)/g.test(additionalPrompt)
     ) {
-      alert('Using custom prompt with tags might create issues.');
+      alert("Using custom prompt with tags might create issues.");
     }
 
-    if (selectedSubject?.value === 'Biology' && additionalPrompt.trim() !== '@[biology-prompt](biology-prompt)') {
-      alert('For Biology subject, the Additional Prompt should contain only the biology-prompt tag.');
+    if (
+      selectedSubject?.value === "Biology" &&
+      additionalPrompt.trim() !== "@[biology-prompt](biology-prompt)"
+    ) {
+      alert(
+        "For Biology subject, the Additional Prompt should contain only the biology-prompt tag."
+      );
       return;
     }
 
-    if (selectedSubject?.value === 'History' && additionalPrompt.trim() !== '@[history-prompt](history-prompt)') {
-      alert('For History subject, the Additional Prompt should contain only the history-prompt tag.');
+    if (
+      selectedSubject?.value === "History" &&
+      additionalPrompt.trim() !== "@[history-prompt](history-prompt)"
+    ) {
+      alert(
+        "For History subject, the Additional Prompt should contain only the history-prompt tag."
+      );
       return;
     }
 
@@ -188,7 +215,9 @@ export default function AssignmentListPage() {
     setEditingAssignmentId(assignment.id);
     setShowForm(true);
 
-    const selectedOption = SubjectOptions.find(option => option.value === assignment.subject);
+    const selectedOption = SubjectOptions.find(
+      (option) => option.value === assignment.subject
+    );
     setSelectedSubject(selectedOption || null);
   };
 
@@ -220,8 +249,8 @@ export default function AssignmentListPage() {
 
   // Mention data
   const mentionData: SuggestionDataItem[] = [
-    { id: 'biology-prompt', display: 'biology-prompt' },
-    { id: 'history-prompt', display: 'history-prompt' },
+    { id: "biology-prompt", display: "biology-prompt" },
+    { id: "history-prompt", display: "history-prompt" },
     // Add more mention tags as needed
   ];
 
@@ -255,14 +284,41 @@ export default function AssignmentListPage() {
       <div className="assignment-container">
         {!showForm ? (
           <div className="assignment-list">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
               <Link href="/">
-              <h1 style={{ cursor: "pointer" }}>Home</h1>
+                <h1 style={{ cursor: "pointer" }}>Home</h1>
               </Link>
               <ThemeProvider>
-              <ModeToggle />
+                <ModeToggle />
               </ThemeProvider>
             </div>
+            {/* Breadcrumb */}
+            <Breadcrumb>
+              <BreadcrumbList>
+                <BreadcrumbItem>
+                  <BreadcrumbLink href="/">Home</BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator />
+                {pathname.startsWith("/admin") && (
+                  <>
+                    <BreadcrumbItem>
+                      <BreadcrumbLink href="/admin">Admin</BreadcrumbLink>
+                    </BreadcrumbItem>
+                    <BreadcrumbSeparator />
+                  </>
+                )}
+                <BreadcrumbItem>
+                  <BreadcrumbPage>Assignments</BreadcrumbPage>
+                </BreadcrumbItem>
+              </BreadcrumbList>
+            </Breadcrumb>
+
             <h2>Assignment List</h2>
             <ul>
               {assignments.map((assignment) => (
@@ -357,18 +413,23 @@ export default function AssignmentListPage() {
               </div>
               <div className="form-group">
                 <label>Subject:</label>
-                <SelectMenu onChange={handleSubjectChange} value={selectedSubject} />
+                <SelectMenu
+                  onChange={handleSubjectChange}
+                  value={selectedSubject}
+                />
               </div>
               <div className="form-group">
                 <label>Additional Prompt:</label>
-                {selectedSubject?.value === 'Custom' ? (
+                {selectedSubject?.value === "Custom" ? (
                   <MentionsInput
                     value={additionalPrompt}
-                    onChange={(event, newValue) => setAdditionalPrompt(newValue)}
+                    onChange={(event, newValue) =>
+                      setAdditionalPrompt(newValue)
+                    }
                     placeholder="Type '@' to select a prompt..."
                     className="mentions"
                     allowSuggestionsAboveCursor={true}
-                    style={{ height: '200px' }}
+                    style={{ height: "200px" }}
                     singleLine={false}
                   >
                     <Mention
@@ -376,8 +437,18 @@ export default function AssignmentListPage() {
                       data={mentionData}
                       markup="@[$__display__]($__id__)"
                       appendSpaceOnAdd={true}
-                      renderSuggestion={(suggestion, search, highlightedDisplay, index, focused) => (
-                        <div className={`suggestion-item ${focused ? 'focused' : ''}`}>
+                      renderSuggestion={(
+                        suggestion,
+                        search,
+                        highlightedDisplay,
+                        index,
+                        focused
+                      ) => (
+                        <div
+                          className={`suggestion-item ${
+                            focused ? "focused" : ""
+                          }`}
+                        >
                           {highlightedDisplay}
                         </div>
                       )}
