@@ -51,6 +51,47 @@ let SlateEditor: React.ForwardRefExoticComponent<
     getContainer: () => containerRef.current,
   }));
 
+  function updatePositions() {
+    const errorPositions: PositionedTextError[] = [];
+    const editorElement = containerRef.current;
+
+    if (editorElement) {
+      for (const error of errorList) {
+        const position = findRichTextPixelPosition(
+          editorElement,
+          error.originalText
+        );
+
+        if (position) {
+          errorPositions.push({
+            ...error,
+            offsetTop: position.top,
+            height: position.height,
+          });
+        }
+        console.log("Position:", position);
+      }
+      updateErrorPositions(errorPositions);
+    }
+  }
+
+  // resize observer updates positions of annotations
+  // when the slate editor is resized
+  useEffect(() => {
+    const resizeObserver = new ResizeObserver((entries) => {
+      console.log(entries);
+      updatePositions();
+    });
+
+    if (containerRef.current) {
+      resizeObserver.observe(containerRef.current);
+    }
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [errorList]);
+
   const decorate = useCallback(
     ([node, path]: [Node, Path]) => {
       const ranges: Array<{
@@ -132,27 +173,7 @@ let SlateEditor: React.ForwardRefExoticComponent<
   };
 
   useEffect(() => {
-    const errorPositions: PositionedTextError[] = [];
-    const editorElement = containerRef.current;
-
-    if (editorElement) {
-      for (const error of errorList) {
-        const position = findRichTextPixelPosition(
-          editorElement,
-          error.originalText
-        );
-
-        if (position) {
-          errorPositions.push({
-            ...error,
-            offsetTop: position.top,
-            height: position.height,
-          });
-        }
-        console.log("Position:", position);
-      }
-      updateErrorPositions(errorPositions);
-    }
+    updatePositions();
   });
 
   // useEffect(() => {
