@@ -49,6 +49,7 @@ export default function AssignmentPage({ params }: { params: { id: string } }) {
   // Assignment state
   const [assignment, setAssignment] = useState<Assignment | null>(null);
   const pathname = usePathname();
+
   // Other state variables
   const [learningOutcome, setLearningOutcome] = useState("");
   const [markingCriteria, setMarkingCriteria] = useState("");
