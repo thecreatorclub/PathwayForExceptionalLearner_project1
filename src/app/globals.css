@@ -192,43 +192,6 @@ button {
   color: #999;
 }
 
-.page-container {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  overflow-y: hidden;
-  width: 100%;
-  padding: 0;
-  margin: 0;
-}
-
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  height: 60px;
-  width: 100%;
-  padding: 0 20px;
-  margin: 0;
-  border-bottom: 2px solid #f4f3ef;
-}
-
-.logo-container {
-  display: flex;
-  align-items: center;
-}
-
-.logo {
-  width: 50px;
-  height: 50px;
-}
-
-.logo-text {
-  font-family: "Italianno", cursive;
-  font-size: 36px;
-  margin-left: 10px;
-}
-
 .profile-info {
   display: flex;
   align-items: center;
@@ -792,7 +755,6 @@ input {
   background-color: #9bb2c9;
   color: #000;
 }
-
 
 .suggestions-container {
   position: absolute;

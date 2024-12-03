@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
+import { NextRequest, NextResponse } from "next/server";
+import { getAssignment } from "./data";
 
 const prisma = new PrismaClient();
 
@@ -9,19 +10,7 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const assignment = await prisma.assignment.findUnique({
-      where: { id: parseInt(params.id) },
-      select: {
-        id: true,
-        title: true, // New field
-        subject: true, // New field
-        learningOutcomes: true,
-        markingCriteria: true,
-        additionalPrompt: true, // New field
-        createdAt: true,
-        updatedAt: true,
-      },
-    });
+    const assignment = getAssignment(params.id);
 
     if (!assignment) {
       return NextResponse.json(
@@ -62,7 +51,13 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   const body = await req.json();
-  const { title, subject, learningOutcomes, markingCriteria, additionalPrompt } = body; // Include additionalPrompt
+  const {
+    title,
+    subject,
+    learningOutcomes,
+    markingCriteria,
+    additionalPrompt,
+  } = body; // Include additionalPrompt
 
   if (!title || !subject || !learningOutcomes || !markingCriteria) {
     return NextResponse.json(

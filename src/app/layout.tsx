@@ -1,9 +1,12 @@
-import type { Metadata } from "next";
-import { Inter } from "next/font/google";
-import "./globals.css";
+import { Header } from "@/components/header";
 import { ThemeProvider } from "@/components/theme-provider";
+import "@radix-ui/themes/styles.css";
+import type { Metadata } from "next";
+import { Roboto } from "next/font/google";
+import styles from "./layout.module.css";
+import "./main.css";
 
-const inter = Inter({ subsets: ["latin"] });
+const roboto = Roboto({ subsets: ["latin"], weight: ["400", "900"] });
 
 export const metadata: Metadata = {
   title: "Learning Pathway for Exceptional Learners",
@@ -16,19 +19,20 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-      <html lang="en" suppressHydrationWarning>
-        <body className={inter.className}>
-            <ThemeProvider
-              attribute="class"
-              defaultTheme="system"
-              enableSystem
-              disableTransitionOnChange
-            >
-              {children}
-            </ThemeProvider>
-          </body>
-      </html>
+    <html lang="en" suppressHydrationWarning>
+      <body className={roboto.className}>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <div className={styles.pageContainer}>
+            <Header />
+            {children}
+          </div>
+        </ThemeProvider>
+      </body>
+    </html>
   );
 }
-
-
