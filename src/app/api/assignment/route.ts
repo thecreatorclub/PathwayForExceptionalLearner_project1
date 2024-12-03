@@ -51,7 +51,7 @@ export async function getAssignments() {
       subject: true, // New field
       learningOutcomes: true,
       markingCriteria: true,
-      // additionalPrompt: true, // New field
+      additionalPrompt: true, // New field
       createdAt: true,
       updatedAt: true,
     },

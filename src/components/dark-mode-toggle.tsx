@@ -17,17 +17,14 @@ export function ModeToggle() {
   }, [theme, systemTheme, setTheme]);
 
   return (
-    <Button style={{ marginLeft: "auto" }}>
+    <Button
+      className="ml-auto cursor-pointer"
+      onClick={() => setTheme(resolvedTheme === "light" ? "dark" : "light")}
+    >
       {resolvedTheme === "dark" ? (
-        <MoonIcon
-          className="h-[1.2rem] w-[1.2rem]"
-          onClick={() => setTheme("light")}
-        />
+        <MoonIcon className="h-[1.2rem] w-[1.2rem]" />
       ) : (
-        <SunIcon
-          className="h-[1.2rem] w-[1.2rem]"
-          onClick={() => setTheme("dark")}
-        />
+        <SunIcon className="h-[1.2rem] w-[1.2rem]" />
       )}
       <span>Toggle theme</span>
     </Button>

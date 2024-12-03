@@ -1,33 +1,22 @@
+import { useTheme } from "next-themes";
 import React, {
   forwardRef,
-  useRef,
-  useImperativeHandle,
   useEffect,
+  useImperativeHandle,
+  useRef,
   useState,
 } from "react";
 import { EventEmitter } from "./EventEmitter";
-import { useTheme } from "next-themes";
+import type { PositionedTextError } from "./utils";
 
 interface ImprovementsProps {
-  errorList: Array<{
-    id: string;
-    originalText: string;
-    improvementText: string;
-    offsetTop?: number;
-    height?: number;
-  }>;
+  errorList: PositionedTextError[];
   hoveredErrorIdRef: React.MutableRefObject<string | null>;
   hoverEventEmitter: EventEmitter;
-  editorContentHeight: number;
 }
 
 const Improvements = forwardRef((props: ImprovementsProps, ref) => {
-  const {
-    errorList,
-    hoveredErrorIdRef,
-    hoverEventEmitter,
-    editorContentHeight,
-  } = props;
+  const { errorList, hoveredErrorIdRef, hoverEventEmitter } = props;
   const { theme } = useTheme();
   const [localHoveredErrorId, setLocalHoveredErrorId] = useState<string | null>(
     null
@@ -50,35 +39,26 @@ const Improvements = forwardRef((props: ImprovementsProps, ref) => {
     getContainer: () => containerRef.current,
   }));
 
-  useEffect(() => {
-    if (containerRef.current) {
-      containerRef.current.scrollTop = containerRef.current.scrollHeight;
-    }
-  }, [editorContentHeight]);
-
   return (
     <div
-      ref={containerRef}
       className="improvements-content"
       style={{
         boxSizing: "border-box",
         position: "relative",
-        border: "1px solid #ccc",
         padding: "10px",
         fontFamily: "monospace",
         whiteSpace: "pre-wrap",
         wordWrap: "break-word",
         overflowWrap: "break-word",
         overflowY: "auto",
-        maxHeight: "380px",
-        minHeight: "380px",
         flexShrink: 0,
+        flex: "1",
       }}
     >
       <div
+        ref={containerRef}
         style={{
           position: "relative",
-          height: `${editorContentHeight}px`,
         }}
       >
         {errorList.map((error) => (
@@ -89,7 +69,19 @@ const Improvements = forwardRef((props: ImprovementsProps, ref) => {
               top: error.offsetTop,
               left: 0,
               right: 0,
-              height: error.height,
+              zIndex: localHoveredErrorId === error.id ? 2 : 0,
+              opacity: localHoveredErrorId === error.id ? 1 : 0.8,
+              border: "solid 1px #444",
+              borderRadius: 8,
+              padding: 8,
+              backgroundColor:
+                localHoveredErrorId === error.id
+                  ? theme === "dark"
+                    ? "#6BAC68"
+                    : "yellow"
+                  : theme === "dark"
+                  ? "#2D2D2D"
+                  : "#F9F9F9",
               overflow: "hidden",
             }}
             onMouseEnter={() => {
@@ -105,12 +97,7 @@ const Improvements = forwardRef((props: ImprovementsProps, ref) => {
               style={{
                 fontFamily: "monospace",
                 fontSize: "13px",
-                backgroundColor:
-                  localHoveredErrorId === error.id
-                    ? theme === "dark"
-                      ? "#6BAC68"
-                      : "yellow"
-                    : "transparent",
+
                 wordWrap: "break-word",
                 whiteSpace: "pre-wrap",
               }}
