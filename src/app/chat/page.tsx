@@ -1,27 +1,16 @@
 "use client";
-import React, {
-  useState,
-  useEffect,
-  useRef,
-  useCallback,
-  useMemo,
-} from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import Draggable from "react-draggable";
 import "../globals.css";
 import SideNavBar from "@/components/sidebar/sidenav";
 import PopoverDemo from "@/components/ui/popover-demo";
-import {
-  Accordion,
-  AccordionItem,
-  AccordionTrigger,
-  AccordionContent,
-} from "@/components/ui/accordion";
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import { PanelResizeHandle, Panel, PanelGroup } from "react-resizable-panels";
-import { Slate, Editable, withReact } from "slate-react";
-import { createEditor, Descendant, Text, Node, Path, Range } from "slate";
-import { useSearchParams } from "next/navigation";
+import { Slate, Editable, withReact } from 'slate-react';
+import { createEditor, Descendant, Text, Node, Path, Range } from 'slate';
+
 
 const SlateEditor = ({
   value,
@@ -44,11 +33,7 @@ const SlateEditor = ({
 
   const decorate = useCallback(
     ([node, path]: [Node, Path]) => {
-      const ranges: Array<{
-        anchor: { path: Path; offset: number };
-        focus: { path: Path; offset: number };
-        errorId: string;
-      }> = [];
+      const ranges: Array<{ anchor: { path: Path; offset: number }; focus: { path: Path; offset: number }; errorId: string }> = [];
       if (!Text.isText(node)) {
         return ranges;
       }
@@ -59,7 +44,7 @@ const SlateEditor = ({
         const { id, originalText, path: errorPath } = error;
 
         if (Path.equals(path, errorPath)) {
-          const regex = new RegExp(escapeRegExp(originalText), "gi");
+          const regex = new RegExp(escapeRegExp(originalText), 'gi');
           let match;
 
           while ((match = regex.exec(text)) !== null) {
@@ -86,8 +71,7 @@ const SlateEditor = ({
           <span
             {...attributes}
             style={{
-              backgroundColor:
-                hoveredErrorId === leaf.errorId ? "yellow" : "lightyellow",
+              backgroundColor: hoveredErrorId === leaf.errorId ? 'yellow' : 'lightyellow',
             }}
             onMouseEnter={() => onHoverError(leaf.errorId)}
             onMouseLeave={() => onHoverError(null)}
@@ -134,7 +118,7 @@ const Page2 = () => {
 
   const [editorValue, setEditorValue] = useState<Descendant[]>([
     {
-      children: [{ text: "" }],
+      children: [{ text: '' }],
     },
   ]);
 
@@ -145,18 +129,9 @@ const Page2 = () => {
   const [additionalPrompt, setAdditionalPrompt] = useState("");
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [isSideNavOpen, setIsSideNavOpen] = useState(true);
-  const searchParams = useSearchParams();
-  const assignmentId = searchParams.get("assignmentId");
-  const readonlyParam = searchParams.get("readonly");
-  const isReadOnly = readonlyParam === "true";
 
   const [errorList, setErrorList] = useState<
-    Array<{
-      id: string;
-      originalText: string;
-      improvementText: string;
-      path: Path;
-    }>
+    Array<{ id: string; originalText: string; improvementText: string; path: Path }>
   >([]);
 
   const [hoveredErrorId, setHoveredErrorId] = useState<string | null>(null);
@@ -188,29 +163,22 @@ const Page2 = () => {
     editorValue: Descendant[],
     replacements: { originalText: string; improvementText: string }[]
   ) {
-    let errorList: Array<{
-      id: string;
-      originalText: string;
-      improvementText: string;
-      path: Path;
-    }> = [];
+    let errorList: Array<{ id: string; originalText: string; improvementText: string; path: Path }> = [];
 
     for (const [node, path] of Node.nodes({ children: editorValue })) {
       if (Text.isText(node)) {
         const text = node.text;
-        replacements.forEach(
-          ({ originalText, improvementText }, errorIndex) => {
-            if (text.toLowerCase().includes(originalText.toLowerCase())) {
-              const id = `${Path.toString()}-${errorIndex}`;
-              errorList.push({
-                id,
-                originalText,
-                improvementText,
-                path,
-              });
-            }
+        replacements.forEach(({ originalText, improvementText }, errorIndex) => {
+          if (text.toLowerCase().includes(originalText.toLowerCase())) {
+            const id = `${Path.toString()}-${errorIndex}`;
+            errorList.push({
+              id,
+              originalText,
+              improvementText,
+              path,
+            });
           }
-        );
+        });
       }
     }
 
@@ -218,10 +186,8 @@ const Page2 = () => {
   }
 
   const extractFeedback = (feedback: string) => {
-    const originalTextRegex =
-      /\*\*Original Text:\*\*\s*"([^"]+)"\s*<endoforiginal>/gi;
-    const improvementRegex =
-      /\*\*Improvement:\*\*\s*([\s\S]*?)<endofimprovement>/g;
+    const originalTextRegex = /\*\*Original Text:\*\*\s*"([^"]+)"\s*<endoforiginal>/gi;
+    const improvementRegex = /\*\*Improvement:\*\*\s*([\s\S]*?)<endofimprovement>/g;
 
     const replacements = [];
 
@@ -251,15 +217,14 @@ const Page2 = () => {
       clearTimeout(timeoutRef.current);
     }
     try {
-      const studentWritingText = editorValue
-        .map((line) => Node.string(line))
-        .join("\n");
+      const studentWritingText = editorValue.map(line => Node.string(line)).join('\n');
 
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          assignmentId,
+          learningOutcome,
+          markingCriteria,
           studentWriting: studentWritingText,
           additionalPrompt,
         }),
@@ -283,24 +248,6 @@ const Page2 = () => {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    if (assignmentId) {
-      // Fetch the assignment data from your API
-      fetch(`/api/assignment/${assignmentId}`)
-        .then((res) => res.json())
-        .then((data) => {
-          if (data) {
-            // Set the fetched data to your state variables
-            setLearningOutcome(data.learningOutcomes);
-            setMarkingCriteria(data.markingCriteria);
-          } else {
-            console.error("No data found for the assignment");
-          }
-        })
-        .catch((err) => console.error("Error fetching assignment data:", err));
-    }
-  }, [assignmentId]);
 
   useEffect(() => {
     if (!feedback) {
@@ -335,9 +282,7 @@ const Page2 = () => {
       {/* Header */}
       <header className="header flex justify-between items-center p-4">
         <div className="logo-container">
-          <span className="logo-text text-xl font-semibold">
-            “We are Learners”
-          </span>
+          <span className="logo-text text-xl font-semibold">“We are Learners”</span>
         </div>
         <div className="flex items-center space-x-4">
           {/*<UserButton />*/}
@@ -354,9 +299,7 @@ const Page2 = () => {
         {/* Draggable Side Navigation */}
         <Draggable handle=".draggable-handle">
           <div
-            className={`sidenav w-64 bg-white shadow-md ${
-              isSideNavOpen ? "" : "hidden"
-            }`}
+            className={`sidenav w-64 bg-white shadow-md ${isSideNavOpen ? "" : "hidden"}`}
             style={{ position: "absolute", zIndex: 1000 }}
           >
             <div className="draggable-handle p-2 bg-gray-700 text-white cursor-move">
@@ -373,47 +316,25 @@ const Page2 = () => {
         </Draggable>
 
         <main className="flex-1 p-4 overflow-auto">
-          <div
-            className="flex flex-col space-y-4"
-            style={{ height: "200vh", width: "500vh" }}
-          >
+          <div className="flex flex-col space-y-4"style={{ height: '200vh', width: '500vh'}}>
             {/* Top PanelGroup */}
             <PanelGroup direction="horizontal">
               {/* Left Panel: Learning Outcome and Marking Criteria */}
               <Panel className="p-4" defaultSize={50} minSize={30}>
-                <div
-                  className="accordion-container"
-                  style={{
-                    height: "100%",
-                    overflow: "hidden",
-                    display: "flex",
-                    flexDirection: "column",
-                  }}
-                >
+                <div className="accordion-container" style={{ height: "100%", overflow: "hidden", display: "flex", flexDirection: "column" }}>
                   <div style={{ flex: 1, overflowY: "auto" }}>
                     {/* Learning Outcome Accordion */}
                     <Accordion type="single" collapsible>
                       <AccordionItem value="learning-outcome">
-                        <AccordionTrigger
-                          style={{ borderBottom: "2px solid #a1a5ab" }}
-                        >
-                          Learning Outcome
-                        </AccordionTrigger>
+                        <AccordionTrigger style={{borderBottom: '2px solid #a1a5ab'}}>Learning Outcome</AccordionTrigger>
                         <AccordionContent>
-                          <div
-                            style={{ maxHeight: "150px", overflowY: "auto" }}
-                          >
+                          <div>
                             <textarea
                               value={learningOutcome}
-                              onChange={(e) =>
-                                setLearningOutcome(e.target.value)
-                              }
+                              onChange={(e) => setLearningOutcome(e.target.value)}
                               rows={10}
-                              className={`textarea w-full p-2 border border-gray-300 rounded ${
-                                isReadOnly ? "bg-gray-100" : ""
-                              }`}
+                              className="textarea w-full p-2 border border-gray-300 rounded"
                               placeholder="Enter learning outcomes here..."
-                              readOnly={isReadOnly}
                             />
                           </div>
                         </AccordionContent>
@@ -424,26 +345,15 @@ const Page2 = () => {
                     {/* Marking Criteria Accordion */}
                     <Accordion type="single" collapsible>
                       <AccordionItem value="marking-criteria">
-                        <AccordionTrigger
-                          style={{ borderBottom: "2px solid #a1a5ab" }}
-                        >
-                          Marking Criteria
-                        </AccordionTrigger>
+                        <AccordionTrigger style={{borderBottom: '2px solid #a1a5ab'}}>Marking Criteria</AccordionTrigger>
                         <AccordionContent>
-                          <div
-                            style={{ maxHeight: "150px", overflowY: "auto" }}
-                          >
+                          <div>
                             <textarea
                               value={markingCriteria}
-                              onChange={(e) =>
-                                setMarkingCriteria(e.target.value)
-                              }
+                              onChange={(e) => setMarkingCriteria(e.target.value)}
                               rows={10}
-                              className={`textarea w-full p-2 border border-gray-300 rounded ${
-                                isReadOnly ? "bg-gray-100" : ""
-                              }`}
+                              className="textarea w-full p-2 border border-gray-300 rounded"
                               placeholder="Enter marking criteria here..."
-                              readOnly={isReadOnly}
                             />
                           </div>
                         </AccordionContent>
@@ -460,89 +370,78 @@ const Page2 = () => {
               <Panel className="p-4" minSize={30} defaultSize={50}>
                 <div
                   className="feedback-box"
-                  style={{
-                    maxHeight: "625px",
-                    maxWidth: "700px",
-                    overflowY: "auto",
-                  }}
+                  style={{ maxHeight: "625px", maxWidth: "700px", overflowY: "auto" }}
                 >
                   <h2>Feedback</h2>
                   {loading ? (
                     <div className="loading">Generating feedback...</div>
                   ) : (
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                      {displayedFeedback}
-                    </ReactMarkdown>
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{displayedFeedback}</ReactMarkdown>
                   )}
                 </div>
               </Panel>
             </PanelGroup>
 
             {/* Bottom PanelGroup */}
-            <PanelGroup direction="horizontal">
-              {/* Left Panel: Student Writing */}
-              <Panel
-                className="p-4"
-                defaultSize={50}
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  height: "100%",
-                }}
-              >
-                <h2 className="text-lg font-semibold mb-2">Student Writing</h2>
-                <div style={{ overflowY: "auto" }}>
-                  <SlateEditor
-                    value={editorValue}
-                    onChange={setEditorValue}
-                    errorList={errorList}
-                    onHoverError={setHoveredErrorId}
-                    hoveredErrorId={hoveredErrorId}
-                  />
-                </div>
-              </Panel>
+              <PanelGroup direction="horizontal">
+                {/* Left Panel: Student Writing */}
+                <Panel
+                  className="p-4"
+                  style={{ display: 'flex', flexDirection: 'column', alignSelf: 'stretch' }}
+                >
+                  <h2 className="text-lg font-semibold mb-2">Student Writing</h2>
+                    <div style={{ flexGrow: 1}}>
+                    <SlateEditor
+                      value={editorValue}
+                      onChange={setEditorValue}
+                      errorList={errorList}
+                      onHoverError={setHoveredErrorId}
+                      hoveredErrorId={hoveredErrorId}
+                    />
+                    </div>
+                </Panel>
 
-              {/* Resize Handle */}
-              <PanelResizeHandle className="w-1 bg-gray-200 cursor-col-resize" />
+                {/* Resize Handle */}
+                <PanelResizeHandle className="w-1 bg-gray-200 cursor-col-resize" />
 
-              {/* Right Panel: Improvements */}
-              <Panel
-                className="p-4"
-                defaultSize={50}
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  height: "100%",
-                }}
-              >
-                <h2 className="text-lg font-semibold mb-2">Improvements</h2>
-                <div style={{ flex: 1, overflowY: "auto" }}>
+                {/* Right Panel: Improvements */}
+                <Panel
+                  className="p-4"
+                  style={{ display: 'flex', flexDirection: 'column', alignSelf: 'stretch' }}
+                >
+                  <h2 className="text-lg font-semibold mb-2">Improvements</h2>
                   <div
-                    className="Improvement-box"
                     style={{
-                      display: "flex",
-                      flexDirection: "column",
+                      display: 'flex',
+                      flexDirection: 'column',
                     }}
                   >
-                    {errorList.map((error) => (
-                      <div
-                        key={error.id}
-                        style={{
-                          backgroundColor:
-                            hoveredErrorId === error.id
-                              ? "yellow"
-                              : "transparent",
-                        }}
-                        onMouseEnter={() => setHoveredErrorId(error.id)}
-                        onMouseLeave={() => setHoveredErrorId(null)}
-                      >
-                        {error.improvementText}
-                      </div>
-                    ))}
+                    <div className="Improvement-box"
+                      style={{
+                        border: '1px solid #ccc',
+                        padding: '10px',
+                        fontFamily: 'monospace',
+                        whiteSpace: 'pre-wrap',
+                        wordWrap: 'break-word',
+                      }}
+                    >
+                      {errorList.map((error) => (
+                        <div
+                          key={error.id}
+                          style={{
+                            backgroundColor:
+                              hoveredErrorId === error.id ? 'yellow' : 'transparent',
+                          }}
+                          onMouseEnter={() => setHoveredErrorId(error.id)}
+                          onMouseLeave={() => setHoveredErrorId(null)}
+                        >
+                          {error.improvementText}
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              </Panel>
-            </PanelGroup>
+                </Panel>
+              </PanelGroup>
 
             {/* Submit Button */}
             <div className="text-center">

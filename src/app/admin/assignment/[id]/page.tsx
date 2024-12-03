@@ -1,5 +1,11 @@
 "use client";
-import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+} from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import Draggable from "react-draggable";
@@ -18,6 +24,15 @@ import { createEditor, Descendant, Text, Node, Path } from "slate";
 import { ModeToggle } from "@/components/dark-mode-toggle";
 import { ThemeProvider } from "@/components/theme-provider";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 
 interface Assignment {
   id: number;
@@ -30,14 +45,10 @@ interface Assignment {
   updatedAt: string;
 }
 
-export default function AssignmentPage({
-  params,
-}: {
-  params: { id: string };
-}) {
+export default function AssignmentPage({ params }: { params: { id: string } }) {
   // Assignment state
   const [assignment, setAssignment] = useState<Assignment | null>(null);
-
+  const pathname = usePathname();
   // Other state variables
   const [learningOutcome, setLearningOutcome] = useState("");
   const [markingCriteria, setMarkingCriteria] = useState("");
@@ -54,7 +65,12 @@ export default function AssignmentPage({
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [isSideNavOpen, setIsSideNavOpen] = useState(true);
   const [errorList, setErrorList] = useState<
-    Array<{ id: string; originalText: string; improvementText: string; path: Path }>
+    Array<{
+      id: string;
+      originalText: string;
+      improvementText: string;
+      path: Path;
+    }>
   >([]);
   const [hoveredErrorId, setHoveredErrorId] = useState<string | null>(null);
 
@@ -207,17 +223,19 @@ export default function AssignmentPage({
     for (const [node, path] of Node.nodes({ children: editorValue })) {
       if (Text.isText(node)) {
         const text = node.text;
-        replacements.forEach(({ originalText, improvementText }, errorIndex) => {
-          if (text.toLowerCase().includes(originalText.toLowerCase())) {
-            const id = `${Path.toString()}-${errorIndex}`;
-            errorList.push({
-              id,
-              originalText,
-              improvementText,
-              path,
-            });
+        replacements.forEach(
+          ({ originalText, improvementText }, errorIndex) => {
+            if (text.toLowerCase().includes(originalText.toLowerCase())) {
+              const id = `${Path.toString()}-${errorIndex}`;
+              errorList.push({
+                id,
+                originalText,
+                improvementText,
+                path,
+              });
+            }
           }
-        });
+        );
       }
     }
 
@@ -225,7 +243,8 @@ export default function AssignmentPage({
   };
 
   const extractFeedback = (feedback: string) => {
-    const originalTextRegex = /\*\*Original Text:\*\*\s*"([^"]+)"\s*<endoforiginal>/gi;
+    const originalTextRegex =
+      /\*\*Original Text:\*\*\s*"([^"]+)"\s*<endoforiginal>/gi;
     const improvementRegex =
       /\*\*Improvement:\*\*\s*([\s\S]*?)<endofimprovement>/g;
 
@@ -277,10 +296,7 @@ export default function AssignmentPage({
         extractFeedback(data.message || "No feedback received.");
 
         const feedbackCleaned = data.message
-          .replace(
-            /\*\*Original Text:\*\*\s*"([^"]+)"\s*<endoforiginal>/gi,
-            ""
-          )
+          .replace(/\*\*Original Text:\*\*\s*"([^"]+)"\s*<endoforiginal>/gi, "")
           .replace(/\*\*Improvement:\*\*\s*[\s\S]*?<endofimprovement>/g, "");
         setFeedback(feedbackCleaned.trim());
       } else {
@@ -334,16 +350,14 @@ export default function AssignmentPage({
           <Link href="/">
             <h1 style={{ cursor: "pointer" }}>Home</h1>
           </Link>
-            <h1 className="text-xl font-semibold ml-5">{assignment.title}</h1>
-            <h2 className="text-lg font-medium ml-5">{assignment.subject}</h2>
+          <h1 className="text-xl font-semibold ml-5">{assignment.title}</h1>
+          <h2 className="text-lg font-medium ml-5">{assignment.subject}</h2>
         </div>
         <div className="flex items-center space-x-4">
           <ThemeProvider>
             <ModeToggle />
           </ThemeProvider>
-          <PopoverDemo
-            initialText={assignment.additionalPrompt}
-          />
+          <PopoverDemo initialText={assignment.additionalPrompt} />
         </div>
       </header>
 
@@ -375,6 +389,31 @@ export default function AssignmentPage({
             className="flex flex-col space-y-4"
             style={{ height: "200vh", width: "500vh" }}
           >
+            <Breadcrumb>
+              <BreadcrumbList>
+                <BreadcrumbItem>
+                  <BreadcrumbLink href="/">Home</BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator />
+                {pathname.startsWith("/admin") && (
+                  <>
+                    <BreadcrumbItem>
+                      <BreadcrumbLink href="/admin">Admin</BreadcrumbLink>
+                    </BreadcrumbItem>
+                    <BreadcrumbSeparator />
+                  </>
+                )}
+                <BreadcrumbItem>
+                  <BreadcrumbLink href="/admin/assignments">
+                    Assignments
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                  <BreadcrumbPage>{params.id}</BreadcrumbPage>
+                </BreadcrumbItem>
+              </BreadcrumbList>
+            </Breadcrumb>
             {/* Top PanelGroup */}
             <PanelGroup direction="horizontal">
               {/* Left Panel: Learning Outcome and Marking Criteria */}
@@ -406,14 +445,14 @@ export default function AssignmentPage({
                               {learningOutcome}
                             </pre> */}
                             <div>
-                            <textarea
-                              value={learningOutcome}
-                              readOnly
-                              rows={10}
-                              className="textarea w-full p-2 border border-gray-300 rounded"
-                              placeholder="Enter learning outcomes here..."
-                            />
-                          </div>
+                              <textarea
+                                value={learningOutcome}
+                                readOnly
+                                rows={10}
+                                className="textarea w-full p-2 border border-gray-300 rounded"
+                                placeholder="Enter learning outcomes here..."
+                              />
+                            </div>
                           </div>
                         </AccordionContent>
                       </AccordionItem>
@@ -528,7 +567,9 @@ export default function AssignmentPage({
                       key={error.id}
                       style={{
                         backgroundColor:
-                          hoveredErrorId === error.id ? "yellow" : "transparent",
+                          hoveredErrorId === error.id
+                            ? "yellow"
+                            : "transparent",
                       }}
                       onMouseEnter={() => setHoveredErrorId(error.id)}
                       onMouseLeave={() => setHoveredErrorId(null)}
