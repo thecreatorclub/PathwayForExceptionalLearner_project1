@@ -210,5 +210,6 @@ let SlateEditor: React.ForwardRefExoticComponent<
 });
 
 SlateEditor = memo(SlateEditor);
+SlateEditor.displayName = "SlateEditor";
 
 export default SlateEditor;

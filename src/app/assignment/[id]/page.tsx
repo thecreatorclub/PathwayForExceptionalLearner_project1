@@ -1,7 +1,8 @@
-import { getAssignment } from "@/app/api/assignment/[id]/route";
+import { getAssignment } from "@/app/api/assignment/[id]/data";
 import { Container } from "@radix-ui/themes";
 import { AssignmentInfo } from "./AssignmentInfo";
 import { AssignmentView } from "./AssignmentView";
+
 export default async function AssignmentPage({
   params,
 }: {

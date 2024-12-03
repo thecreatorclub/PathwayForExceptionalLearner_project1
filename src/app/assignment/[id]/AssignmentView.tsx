@@ -194,7 +194,7 @@ export function AssignmentView({ assignment }: { assignment: Assignment }) {
 
     setErrorList(errors);
     setFeedback(message);
-  }, []);
+  }, [editorValue]);
 
   // make sure both areas are the same size
   useEffect(() => {

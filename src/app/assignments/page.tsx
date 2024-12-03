@@ -10,8 +10,7 @@ import {
   Text,
 } from "@radix-ui/themes";
 import Link from "next/link";
-
-import { getAssignments } from "../api/assignment/route";
+import { getAssignments } from "../api/assignment/data";
 
 function AssignmentCard({ assignment }: { assignment: Assignment }) {
   return (

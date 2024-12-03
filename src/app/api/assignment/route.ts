@@ -1,5 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
+import { getAssignments } from "./data";
 
 const prisma = new PrismaClient();
 
@@ -41,21 +42,6 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
-}
-
-export async function getAssignments() {
-  return prisma.assignment.findMany({
-    select: {
-      id: true,
-      title: true, // New field
-      subject: true, // New field
-      learningOutcomes: true,
-      markingCriteria: true,
-      additionalPrompt: true, // New field
-      createdAt: true,
-      updatedAt: true,
-    },
-  });
 }
 
 // GET: Retrieve all assignments
