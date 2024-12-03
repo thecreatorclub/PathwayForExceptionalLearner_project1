@@ -6,8 +6,8 @@ export interface SubjectOption {
     readonly isDisabled?: boolean;
   }
 
-  const Biology: string =`
-Update Prompt with below:
+export const Biology: string = 
+`Update Prompt with below:
 **Instructions**:  
 - Check if the student's writing is ≤ 250 words. If so, inform them it's too short for a detailed analysis. If blank, assign a score of zero.  
 - Use a friendly, supportive tone with first-person language.  
@@ -31,10 +31,9 @@ Update Prompt with below:
 
 **Conclusion**:  
 - Encourage the student to take ownership of their improvement.  
-- Emphasize the positive impact of the suggested changes on the quality of their biological analysis or experiment.
-`
+- Emphasize the positive impact of the suggested changes on the quality of their biological analysis or experiment.`;
 
-const History: string = `
+export const History: string = `
 Update Prompt with below:
 **Instructions**:  
 - Check if the student's writing is ≤ 250 words. If so, inform them it's too short for a detailed analysis. If blank, assign a score of zero.  
@@ -63,14 +62,7 @@ Update Prompt with below:
 `;
   
 export const SubjectOptions: readonly SubjectOption[] = [
+    { value: 'Custom', label: 'Custom', color: '#000000' },
     { value: 'Biology', label: 'Biology', color: '#00B8D9'},
     { value: 'History', label: 'History', color: '#0052CC'},
-    //{ value: 'purple', label: 'Purple', color: '#5243AA' },
-    // { value: 'red', label: 'Red', color: '#FF5630', isFixed: true },
-    // { value: 'orange', label: 'Orange', color: '#FF8B00' },
-    // { value: 'yellow', label: 'Yellow', color: '#FFC400' },
-    // { value: 'green', label: 'Green', color: '#36B37E' },
-    // { value: 'forest', label: 'Forest', color: '#00875A' },
-    // { value: 'slate', label: 'Slate', color: '#253858' },
-    // { value: 'silver', label: 'Silver', color: '#666666' },
 ];

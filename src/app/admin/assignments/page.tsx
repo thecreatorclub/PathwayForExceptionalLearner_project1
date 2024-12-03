@@ -2,7 +2,11 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import App from '@/components/select-menu/selectmenu';
+import SelectMenu from '@/components/select-menu/selectmenu';
+import { SubjectOptions, Biology, History, SubjectOption } from '@/components/select-menu/data';
+import { MentionsInput, Mention, SuggestionDataItem } from 'react-mentions';
+import { ModeToggle } from "@/components/dark-mode-toggle";
+import { ThemeProvider } from "@/components/theme-provider";
 
 interface Assignment {
   id: number;
@@ -21,13 +25,14 @@ export default function AssignmentListPage() {
   const [subject, setSubject] = useState("");
   const [learningOutcomes, setLearningOutcomes] = useState("");
   const [markingCriteria, setMarkingCriteria] = useState("");
-  const [additionalPrompt, setAdditionalPrompt] = useState(""); // New state for additional prompt
+  const [additionalPrompt, setAdditionalPrompt] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [editingAssignmentId, setEditingAssignmentId] = useState<number | null>(
     null
   );
   const [showForm, setShowForm] = useState(false);
+  const [selectedSubject, setSelectedSubject] = useState<SubjectOption | null>(null);
 
   // Fetch all assignments
   useEffect(() => {
@@ -37,13 +42,58 @@ export default function AssignmentListPage() {
       .catch((err) => console.error("Error fetching assignments", err));
   }, []);
 
-  // Handle textarea input to adjust height
-  const handleTextareaInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const textarea = e.target;
-    textarea.style.height = 'auto';
-    textarea.style.height = `${textarea.scrollHeight}px`;
+  // Process template tags into full template texts
+  const processTemplateText = (text: string) => {
+    const templateMap: { [key: string]: string } = {
+      'biology-prompt': Biology,
+      'history-prompt': History,
+      // Add more templates as needed
+    };
+
+    // Replace mentions with actual template content
+    return text.replace(/@\[([^\]]+)\]\(([^)]+)\)/g, (match, display, id) => {
+      return templateMap[id] || match;
+    });
   };
 
+  // Handle subject change
+  const handleSubjectChange = (selectedOption: SubjectOption | null) => {
+    // Check if current subject is 'Custom' and user is changing to a different subject
+    if (
+      subject === 'Custom' &&
+      selectedOption &&
+      selectedOption.value !== 'Custom'
+    ) {
+      const confirmChange = window.confirm(
+        'Changing the subject will reset your additional prompt. Do you want to proceed?'
+      );
+
+      if (!confirmChange) {
+        // User canceled, do not update the subject
+        return;
+      } else {
+        // Reset the additionalPrompt
+        setAdditionalPrompt('');
+      }
+    }
+
+    setSelectedSubject(selectedOption);
+    setSubject(selectedOption ? selectedOption.value : '');
+
+    if (selectedOption) {
+      if (selectedOption.value === 'Biology') {
+        // Set the Additional Prompt to the mention tag for Biology
+        setAdditionalPrompt(`@[biology-prompt](biology-prompt)`);
+      } else if (selectedOption.value === 'History') {
+        // Set the Additional Prompt to the mention tag for History
+        setAdditionalPrompt(`@[history-prompt](history-prompt)`);
+      } else if (selectedOption.value === 'Custom') {
+        setAdditionalPrompt(''); // Leave empty for custom input
+      }
+    } else {
+      setAdditionalPrompt('');
+    }
+  };
 
   // Handle form submission to add or edit an assignment
   const handleSubmit = async (e: React.FormEvent) => {
@@ -51,6 +101,24 @@ export default function AssignmentListPage() {
 
     if (!title || !subject || !learningOutcomes || !markingCriteria) {
       setErrorMessage("Please fill in all fields");
+      return;
+    }
+
+    // Show a warning if using Custom subject with mention tags
+    if (
+      selectedSubject?.value === 'Custom' &&
+      /@\[([^\]]+)\]\(([^)]+)\)/g.test(additionalPrompt)
+    ) {
+      alert('Using custom prompt with tags might create issues.');
+    }
+
+    if (selectedSubject?.value === 'Biology' && additionalPrompt.trim() !== '@[biology-prompt](biology-prompt)') {
+      alert('For Biology subject, the Additional Prompt should contain only the biology-prompt tag.');
+      return;
+    }
+
+    if (selectedSubject?.value === 'History' && additionalPrompt.trim() !== '@[history-prompt](history-prompt)') {
+      alert('For History subject, the Additional Prompt should contain only the history-prompt tag.');
       return;
     }
 
@@ -70,7 +138,7 @@ export default function AssignmentListPage() {
           subject,
           learningOutcomes,
           markingCriteria,
-          additionalPrompt,
+          additionalPrompt, // Save the additionalPrompt as-is
         }),
       });
 
@@ -98,16 +166,16 @@ export default function AssignmentListPage() {
     }
   };
 
-  // Reset form fields and editing state
   const resetForm = () => {
     setTitle("");
     setSubject("");
     setLearningOutcomes("");
     setMarkingCriteria("");
-    setAdditionalPrompt(""); // Reset additionalPrompt
+    setAdditionalPrompt("");
     setEditingAssignmentId(null);
     setErrorMessage(null);
-    setShowForm(false); // Hide the form and show the list again
+    setShowForm(false);
+    setSelectedSubject(null);
   };
 
   // Handle edit action
@@ -119,12 +187,14 @@ export default function AssignmentListPage() {
     setAdditionalPrompt(assignment.additionalPrompt);
     setEditingAssignmentId(assignment.id);
     setShowForm(true);
+
+    const selectedOption = SubjectOptions.find(option => option.value === assignment.subject);
+    setSelectedSubject(selectedOption || null);
   };
-  
 
   // Handle add action
   const handleAdd = () => {
-    resetForm(); // Clear the form for adding a new assignment
+    resetForm();
     setShowForm(true);
   };
 
@@ -148,15 +218,51 @@ export default function AssignmentListPage() {
     }
   };
 
+  // Mention data
+  const mentionData: SuggestionDataItem[] = [
+    { id: 'biology-prompt', display: 'biology-prompt' },
+    { id: 'history-prompt', display: 'history-prompt' },
+    // Add more mention tags as needed
+  ];
+
+  // Custom render function for the mentions
+  const renderMentions = (text: string) => {
+    const regex = /@\[([^\]]+)\]\(([^)]+)\)/g;
+    const parts = [];
+    let lastIndex = 0;
+    let match;
+    while ((match = regex.exec(text)) !== null) {
+      const start = match.index;
+      const end = regex.lastIndex;
+      if (start > lastIndex) {
+        parts.push(text.substring(lastIndex, start));
+      }
+      parts.push(
+        <span key={start} className="mentions__mention">
+          {match[1]}
+        </span>
+      );
+      lastIndex = end;
+    }
+    if (lastIndex < text.length) {
+      parts.push(text.substring(lastIndex));
+    }
+    return parts;
+  };
+
   return (
     <div className="assignment-page">
       <div className="assignment-container">
-        {/* Conditionally render Assignment List or Form based on showForm state */}
         {!showForm ? (
           <div className="assignment-list">
-            <Link href="/">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Link href="/">
               <h1 style={{ cursor: "pointer" }}>Home</h1>
-            </Link>
+              </Link>
+              <ThemeProvider>
+              <ModeToggle />
+              </ThemeProvider>
+            </div>
             <h2>Assignment List</h2>
             <ul>
               {assignments.map((assignment) => (
@@ -182,9 +288,9 @@ export default function AssignmentListPage() {
                   <p>
                     <strong>Additional Prompt:</strong>
                   </p>
-                  <pre style={{ whiteSpace: 'pre-wrap' }}>
-                    {assignment.additionalPrompt}
-                  </pre>
+                  <div className="mentions read-only">
+                    {renderMentions(assignment.additionalPrompt)}
+                  </div>
                   <button
                     onClick={() => handleEdit(assignment)}
                     className="edit-button"
@@ -232,20 +338,10 @@ export default function AssignmentListPage() {
                 />
               </div>
               <div className="form-group">
-                <label>Subject:</label>
-                <input
-                  type="text"
-                  value={subject}
-                  onChange={(e) => setSubject(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="form-group">
                 <label>Learning Outcomes:</label>
                 <textarea
                   value={learningOutcomes}
                   onChange={(e) => setLearningOutcomes(e.target.value)}
-                  onInput={handleTextareaInput}
                   required
                   rows={4}
                 />
@@ -255,22 +351,43 @@ export default function AssignmentListPage() {
                 <textarea
                   value={markingCriteria}
                   onChange={(e) => setMarkingCriteria(e.target.value)}
-                  onInput={handleTextareaInput}
                   required
                   rows={4}
                 />
               </div>
               <div className="form-group">
+                <label>Subject:</label>
+                <SelectMenu onChange={handleSubjectChange} value={selectedSubject} />
+              </div>
+              <div className="form-group">
                 <label>Additional Prompt:</label>
-                <App/>
-                <textarea
-                  value={additionalPrompt}
-                  onChange={(e) => setAdditionalPrompt(e.target.value)}
-                  onInput={handleTextareaInput}
-                  rows={4}
-                  style={{height: '200px'}}
-                  placeholder="Enter additional prompt here..."
-                />
+                {selectedSubject?.value === 'Custom' ? (
+                  <MentionsInput
+                    value={additionalPrompt}
+                    onChange={(event, newValue) => setAdditionalPrompt(newValue)}
+                    placeholder="Type '@' to select a prompt..."
+                    className="mentions"
+                    allowSuggestionsAboveCursor={true}
+                    style={{ height: '200px' }}
+                    singleLine={false}
+                  >
+                    <Mention
+                      trigger="@"
+                      data={mentionData}
+                      markup="@[$__display__]($__id__)"
+                      appendSpaceOnAdd={true}
+                      renderSuggestion={(suggestion, search, highlightedDisplay, index, focused) => (
+                        <div className={`suggestion-item ${focused ? 'focused' : ''}`}>
+                          {highlightedDisplay}
+                        </div>
+                      )}
+                    />
+                  </MentionsInput>
+                ) : (
+                  <div className="mentions read-only">
+                    {renderMentions(additionalPrompt)}
+                  </div>
+                )}
               </div>
               <button type="submit">
                 {editingAssignmentId ? "Save" : "Add Assignment"}

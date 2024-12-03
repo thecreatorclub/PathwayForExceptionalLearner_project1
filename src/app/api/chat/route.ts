@@ -1,13 +1,30 @@
 import { NextResponse, NextRequest } from "next/server";
+import { Biology, History } from "@/components/select-menu/data";
 
 export async function POST(request: NextRequest) {
   try {
     const { learningOutcome, markingCriteria, studentWriting, additionalPrompt } = await request.json();
+    const processTemplateText = (text: string) => {
+      const templateMap: { [key: string]: string } = {
+        'biology-prompt': Biology,
+        'history-prompt': History,
+        // Add more templates as needed
+      };
+
+      // Replace mentions with actual template content
+      return text.replace(/@\[([^\]]+)\]\(([^)]+)\)/g, (match, display, id) => {
+        return templateMap[id] || match;
+      });
+    };
+
+    // Process the additionalPrompt
+    const processedAdditionalPrompt = processTemplateText(additionalPrompt);
+    // console.log("Processed Additional Prompt:", processedAdditionalPrompt);
 
     const prompt = `
     Learning Outcome: ${learningOutcome}
     Marking Criteria: ${markingCriteria}
-    Additional Instructions: ${additionalPrompt}
+    Additional Instructions: ${processedAdditionalPrompt}
     Student Writing:
     ---
     ${studentWriting}
@@ -59,8 +76,8 @@ Instructions:
         Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
       },
       body: JSON.stringify({
-        model: "gpt-4o-mini",//use 4o for demonstration only
-        //model: 'gemini-1.5-flash',
+        model: "gpt-4o",
+        // model: 'gemini-1.5-flash',
         messages: messages,
         temperature: 0,
       }),

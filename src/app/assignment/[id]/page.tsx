@@ -2,22 +2,27 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import Draggable from "react-draggable";
 import "./../../globals.css";
-import SideNavBar from "@/components/sidebar/sidenav";
-import PopoverDemo from "@/components/ui/popover-demo";
 import {
   Accordion,
   AccordionItem,
   AccordionTrigger,
   AccordionContent,
 } from "@/components/ui/accordion";
-import { PanelResizeHandle, Panel, PanelGroup } from "react-resizable-panels";
-import { Slate, Editable, withReact } from "slate-react";
-import { createEditor, Descendant, Text, Node, Path } from "slate";
+import {
+  PanelResizeHandle,
+  Panel,
+  PanelGroup,
+} from "react-resizable-panels";
+import { Node, Path, Text, Descendant } from "slate";
 import { ModeToggle } from "@/components/dark-mode-toggle";
 import { ThemeProvider } from "@/components/theme-provider";
 import Link from "next/link";
+import SlateEditor from "./SlateEditor";
+import Improvements from "./Improvements";
+import { EventEmitter } from "./EventEmitter";
+import { escapeRegExp } from "./utils";
+import { renderMentions } from "../../../utils/renderMentions";
 
 interface Assignment {
   id: number;
@@ -35,10 +40,8 @@ export default function AssignmentPage({
 }: {
   params: { id: string };
 }) {
-  // Assignment state
+  // State and refs
   const [assignment, setAssignment] = useState<Assignment | null>(null);
-
-  // Other state variables
   const [learningOutcome, setLearningOutcome] = useState("");
   const [markingCriteria, setMarkingCriteria] = useState("");
   const [editorValue, setEditorValue] = useState<Descendant[]>([
@@ -52,24 +55,26 @@ export default function AssignmentPage({
   const [loading, setLoading] = useState(false);
   const [additionalPrompt, setAdditionalPrompt] = useState("");
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const [isSideNavOpen, setIsSideNavOpen] = useState(true);
   const [errorList, setErrorList] = useState<
-    Array<{ id: string; originalText: string; improvementText: string; path: Path }>
+    Array<{
+      id: string;
+      originalText: string;
+      improvementText: string;
+      path: Path;
+      offsetTop?: number;
+      height?: number; // Store the height of the corresponding text block
+    }>
   >([]);
-  const [hoveredErrorId, setHoveredErrorId] = useState<string | null>(null);
+  const hoveredErrorIdRef = useRef<string | null>(null);
+  const [errorsUpdated, setErrorsUpdated] = useState(false);
+  const slateEditorRef = useRef<any>(null);
+  const improvementsRef = useRef<any>(null);
+  const isSyncingScroll = useRef(false);
+  const hoverEventEmitter = useMemo(() => new EventEmitter(), []);
 
-  const toggleSideNav = () => setIsSideNavOpen(!isSideNavOpen);
+  const [editorContentHeight, setEditorContentHeight] = useState<number>(0);
 
-  const handleSaveAdditionalPrompt = useCallback((prompt: string) => {
-    setAdditionalPrompt(prompt);
-    localStorage.setItem("additionalPrompt", prompt);
-  }, []);
-
-  const handleClearAdditionalPrompt = useCallback(() => {
-    setAdditionalPrompt("");
-    localStorage.removeItem("additionalPrompt");
-  }, []);
-
+  // Hooks
   useEffect(() => {
     const savedPrompt = localStorage.getItem("additionalPrompt");
     if (savedPrompt) {
@@ -77,7 +82,6 @@ export default function AssignmentPage({
     }
   }, []);
 
-  // Fetch assignment data
   useEffect(() => {
     fetch(`/api/assignment/${params.id}`)
       .then((res) => res.json())
@@ -85,169 +89,103 @@ export default function AssignmentPage({
         setAssignment(data);
         setLearningOutcome(data.learningOutcomes);
         setMarkingCriteria(data.markingCriteria);
+        setAdditionalPrompt(data.additionalPrompt);
       });
   }, [params.id]);
 
-  const SlateEditor = ({
-    value,
-    onChange,
-    errorList,
-    onHoverError,
-    hoveredErrorId,
-  }: {
-    value: Descendant[];
-    onChange: (value: Descendant[]) => void;
-    errorList: Array<{ id: string; originalText: string; path: Path }>;
-    onHoverError: (id: string | null) => void;
-    hoveredErrorId: string | null;
-  }) => {
-    const editor = useMemo(() => withReact(createEditor()), []);
+  useEffect(() => {
+    if (!feedback) {
+      setDisplayedFeedback("");
+      feedbackIndexRef.current = 0;
+      return;
+    }
 
-    const escapeRegExp = (string: string) => {
-      return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    };
+    setDisplayedFeedback("");
+    feedbackIndexRef.current = 0;
 
-    const decorate = useCallback(
-      ([node, path]: [Node, Path]) => {
-        const ranges: Array<{
-          anchor: { path: Path; offset: number };
-          focus: { path: Path; offset: number };
-          errorId: string;
-        }> = [];
-        if (!Text.isText(node)) {
-          return ranges;
-        }
+    const typeWriter = () => {
+      setDisplayedFeedback(feedback.slice(0, feedbackIndexRef.current + 1));
+      feedbackIndexRef.current += 1;
 
-        const { text } = node;
-
-        errorList.forEach((error) => {
-          const { id, originalText, path: errorPath } = error;
-
-          if (Path.equals(path, errorPath)) {
-            const regex = new RegExp(escapeRegExp(originalText), "gi");
-            let match;
-
-            while ((match = regex.exec(text)) !== null) {
-              ranges.push({
-                anchor: { path, offset: match.index },
-                focus: { path, offset: match.index + match[0].length },
-                errorId: id,
-              });
-            }
-          }
-        });
-
-        return ranges;
-      },
-      [errorList]
-    );
-
-    const renderLeaf = useCallback(
-      (props: { attributes: any; children: React.ReactNode; leaf: any }) => {
-        const { attributes, children, leaf } = props;
-
-        if (leaf.errorId) {
-          return (
-            <span
-              {...attributes}
-              style={{
-                backgroundColor:
-                  hoveredErrorId === leaf.errorId ? "yellow" : "lightyellow",
-              }}
-              onMouseEnter={() => onHoverError(leaf.errorId)}
-              onMouseLeave={() => onHoverError(null)}
-            >
-              {children}
-            </span>
-          );
-        }
-
-        return <span {...attributes}>{children}</span>;
-      },
-      [hoveredErrorId, onHoverError]
-    );
-
-    const handleChange = (newValue: Descendant[]) => {
-      if (newValue) {
-        onChange(newValue);
+      if (feedbackIndexRef.current < feedback.length) {
+        timeoutRef.current = setTimeout(typeWriter, 10);
       }
     };
 
-    return (
-      <Slate editor={editor} initialValue={value} onChange={handleChange}>
-        <Editable
-          decorate={decorate}
-          renderLeaf={renderLeaf}
-          placeholder="Enter student writing..."
-          style={{
-            border: "1px solid #ccc",
-            padding: "10px",
-            minHeight: "150px",
-            width: "100%",
-            fontFamily: "monospace",
-            whiteSpace: "pre-wrap",
-            wordWrap: "break-word",
-          }}
-        />
-      </Slate>
-    );
-  };
+    timeoutRef.current = setTimeout(typeWriter, 10);
 
-  const processStudentWriting = (
-    editorValue: Descendant[],
-    replacements: { originalText: string; improvementText: string }[]
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, [feedback]);
+
+  // Functions
+  const updateErrorPositions = (
+    positions: { [errorId: string]: { offsetTop: number; height: number } }
   ) => {
-    let errorList: Array<{
-      id: string;
-      originalText: string;
-      improvementText: string;
-      path: Path;
-    }> = [];
-
-    for (const [node, path] of Node.nodes({ children: editorValue })) {
-      if (Text.isText(node)) {
-        const text = node.text;
-        replacements.forEach(({ originalText, improvementText }, errorIndex) => {
-          if (text.toLowerCase().includes(originalText.toLowerCase())) {
-            const id = `${Path.toString()}-${errorIndex}`;
-            errorList.push({
-              id,
-              originalText,
-              improvementText,
-              path,
-            });
-          }
-        });
-      }
-    }
-
-    return errorList;
+    setErrorList((prevErrorList) =>
+      prevErrorList.map((error) => ({
+        ...error,
+        offsetTop: positions[error.id]?.offsetTop,
+        height: positions[error.id]?.height,
+      }))
+    );
   };
 
-  const extractFeedback = (feedback: string) => {
-    const originalTextRegex = /\*\*Original Text:\*\*\s*"([^"]+)"\s*<endoforiginal>/gi;
-    const improvementRegex =
-      /\*\*Improvement:\*\*\s*([\s\S]*?)<endofimprovement>/g;
+  const syncScrollPositions = useCallback(() => {
+    const editorContainer = slateEditorRef.current?.getContainer();
+    const improvementsContainer = improvementsRef.current?.getContainer();
 
-    const replacements = [];
+    if (!editorContainer || !improvementsContainer) return;
 
-    let matchOriginal;
-    let matchImprovement;
+    const onEditorScroll = () => {
+      if (isSyncingScroll.current) return;
+      isSyncingScroll.current = true;
 
-    while (
-      (matchOriginal = originalTextRegex.exec(feedback)) !== null &&
-      (matchImprovement = improvementRegex.exec(feedback)) !== null
+      improvementsContainer.scrollTop = editorContainer.scrollTop;
+
+      isSyncingScroll.current = false;
+    };
+
+    const onImprovementsScroll = () => {
+      if (isSyncingScroll.current) return;
+      isSyncingScroll.current = true;
+
+      editorContainer.scrollTop = improvementsContainer.scrollTop;
+
+      isSyncingScroll.current = false;
+    };
+
+    editorContainer.addEventListener("scroll", onEditorScroll);
+    improvementsContainer.addEventListener("scroll", onImprovementsScroll);
+
+    return () => {
+      editorContainer.removeEventListener("scroll", onEditorScroll);
+      improvementsContainer.removeEventListener(
+        "scroll",
+        onImprovementsScroll
+      );
+    };
+  }, []);
+
+  useEffect(() => {
+    const cleanup = syncScrollPositions();
+    return () => {
+      if (cleanup) cleanup();
+    };
+  }, [syncScrollPositions]);
+
+  // Event handlers
+  async function handleSubmit() {
+    if (
+      slateEditorRef.current &&
+      typeof slateEditorRef.current.scrollToTop === "function"
     ) {
-      const originalText = matchOriginal[1];
-      const improvementText = matchImprovement[1].trim();
-      replacements.push({ originalText, improvementText });
+      slateEditorRef.current.scrollToTop();
     }
 
-    const errorList = processStudentWriting(editorValue, replacements);
-    setErrorList(errorList);
-  };
-
-  const handleSubmit = async () => {
     setLoading(true);
     setFeedback("");
     setDisplayedFeedback("");
@@ -283,6 +221,8 @@ export default function AssignmentPage({
           )
           .replace(/\*\*Improvement:\*\*\s*[\s\S]*?<endofimprovement>/g, "");
         setFeedback(feedbackCleaned.trim());
+
+        syncScrollPositions();
       } else {
         setFeedback("Error: Unable to get feedback.");
       }
@@ -292,35 +232,83 @@ export default function AssignmentPage({
     } finally {
       setLoading(false);
     }
-  };
+  }
 
-  useEffect(() => {
-    if (!feedback) {
-      setDisplayedFeedback("");
-      feedbackIndexRef.current = 0;
-      return;
+  function extractFeedback(feedback: string) {
+    const originalTextRegex =
+      /\*\*Original Text:\*\*\s*"([^"]+)"\s*<endoforiginal>/gi;
+    const improvementRegex =
+      /\*\*Improvement:\*\*\s*([\s\S]*?)<endofimprovement>/g;
+
+    const replacements = [];
+
+    let matchOriginal;
+    let matchImprovement;
+
+    while (
+      (matchOriginal = originalTextRegex.exec(feedback)) !== null &&
+      (matchImprovement = improvementRegex.exec(feedback)) !== null
+    ) {
+      const originalText = matchOriginal[1];
+      const improvementText = matchImprovement[1].trim();
+      replacements.push({ originalText, improvementText });
     }
 
-    setDisplayedFeedback("");
-    feedbackIndexRef.current = 0;
+    console.log("Replacements extracted:", replacements);
 
-    const typeWriter = () => {
-      setDisplayedFeedback(feedback.slice(0, feedbackIndexRef.current + 1));
-      feedbackIndexRef.current += 1;
+    processStudentWriting(editorValue, replacements);
+  }
 
-      if (feedbackIndexRef.current < feedback.length) {
-        timeoutRef.current = setTimeout(typeWriter, 10);
+  function processStudentWriting(
+    editorValue: Descendant[],
+    replacements: { originalText: string; improvementText: string }[]
+  ) {
+    let errors: Array<{
+      id: string;
+      originalText: string;
+      improvementText: string;
+      path: Path;
+      offsetTop?: number;
+      height?: number;
+    }> = [];
+
+    for (const [node, path] of Node.nodes({ children: editorValue })) {
+      if (Text.isText(node)) {
+        const text = node.text;
+        replacements.forEach(
+          ({ originalText, improvementText }, errorIndex) => {
+            const regex = new RegExp(escapeRegExp(originalText), "gi");
+            let match;
+            let occurrenceIndex = 0;
+
+            while ((match = regex.exec(text)) !== null) {
+              const errorId = `${Path.toString()}-${path.join(
+                "."
+              )}-${errorIndex}-${occurrenceIndex}`;
+              console.log("Found match:", {
+                errorId,
+                originalText,
+                path,
+                matchIndex: match.index,
+              });
+              errors.push({
+                id: errorId,
+                originalText,
+                improvementText,
+                path,
+              });
+              occurrenceIndex++;
+            }
+          }
+        );
       }
-    };
+    }
 
-    timeoutRef.current = setTimeout(typeWriter, 10);
+    console.log("Error List after processing student writing:", errors);
 
-    return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-    };
-  }, [feedback]);
+    setErrorList(errors);
+    setErrorsUpdated(true); // Set the flag to true
+  }
 
   if (!assignment) {
     return <p>Loading assignment details...</p>;
@@ -334,220 +322,140 @@ export default function AssignmentPage({
           <Link href="/">
             <h1 style={{ cursor: "pointer" }}>Home</h1>
           </Link>
-            <h1 className="text-xl font-semibold ml-5">{assignment.title}</h1>
-            <h2 className="text-lg font-medium ml-5">{assignment.subject}</h2>
+          <h1 className="text-xl font-semibold ml-5">{assignment.title}</h1>
+          <h2 className="text-lg font-medium ml-5">{assignment.subject}</h2>
         </div>
         <div className="flex items-center space-x-4">
           <ThemeProvider>
             <ModeToggle />
           </ThemeProvider>
-          <PopoverDemo
-            initialText={assignment.additionalPrompt}
-          />
         </div>
       </header>
 
       {/* Main Content */}
-      <div className="flex flex-1 overflow-hidden">
-        {/* Draggable Side Navigation */}
-        <Draggable handle=".draggable-handle">
-          <div
-            className={`sidenav w-64 bg-white shadow-md ${
-              isSideNavOpen ? "" : "hidden"
-            }`}
-            style={{ position: "absolute", zIndex: 1000 }}
-          >
-            <div className="draggable-handle p-2 bg-gray-700 text-white cursor-move">
-              Drag Me
-            </div>
-            <button
-              onClick={toggleSideNav}
-              className="p-2 text-white bg-red-500 hover:bg-red-600"
-            >
-              {isSideNavOpen ? "Close" : "Open"} Nav
-            </button>
-            <SideNavBar />
-          </div>
-        </Draggable>
-
-        <main className="flex-1 p-4 overflow-auto">
-          <div
-            className="flex flex-col space-y-4"
-            style={{ height: "200vh", width: "500vh" }}
-          >
-            {/* Top PanelGroup */}
-            <PanelGroup direction="horizontal">
-              {/* Left Panel: Learning Outcome and Marking Criteria */}
-              <Panel className="p-4" defaultSize={50} minSize={30}>
-                <div
-                  className="accordion-container"
-                  style={{
-                    height: "100%",
-                    overflow: "hidden",
-                    display: "flex",
-                    flexDirection: "column",
-                  }}
-                >
-                  <div style={{ flex: 1, overflowY: "auto" }}>
-                    {/* Learning Outcome Accordion */}
-                    <Accordion type="single" collapsible>
-                      <AccordionItem value="learning-outcome">
-                        <AccordionTrigger
-                          style={{ borderBottom: "2px solid #a1a5ab" }}
-                        >
-                          Learning Outcome
-                        </AccordionTrigger>
-                        <AccordionContent>
-                          <div>
-                            {/* <pre
-                              className="w-full p-2 border border-gray-300 rounded"
-                              style={{ whiteSpace: "pre-wrap" }}
-                            >
-                              {learningOutcome}
-                            </pre> */}
-                            <div>
-                            <textarea
-                              value={learningOutcome}
-                              readOnly
-                              rows={10}
-                              className="textarea w-full p-2 border border-gray-300 rounded"
-                              placeholder="Enter learning outcomes here..."
-                            />
-                          </div>
-                          </div>
-                        </AccordionContent>
-                      </AccordionItem>
-                    </Accordion>
-                  </div>
-                  <div style={{ flex: 1, overflowY: "auto" }}>
-                    {/* Marking Criteria Accordion */}
-                    <Accordion type="single" collapsible>
-                      <AccordionItem value="marking-criteria">
-                        <AccordionTrigger
-                          style={{ borderBottom: "2px solid #a1a5ab" }}
-                        >
-                          Marking Criteria
-                        </AccordionTrigger>
-                        <AccordionContent>
-                          <div>
-                            {/* <pre
-                              className="w-full p-2 border border-gray-300 rounded"
-                              style={{ whiteSpace: "pre-wrap" }}
-                            >
-                              {markingCriteria}
-                            </pre> */}
-                            <textarea
-                              value={markingCriteria}
-                              readOnly
-                              rows={10}
-                              className="textarea w-full p-2 border border-gray-300 rounded"
-                              placeholder="Enter marking criteria here..."
-                            />
-                          </div>
-                        </AccordionContent>
-                      </AccordionItem>
-                    </Accordion>
-                  </div>
-                </div>
-              </Panel>
-
-              {/* Resize Handle */}
-              <PanelResizeHandle className="w-1 bg-gray-200 cursor-col-resize" />
-
-              {/* Right Panel: Feedback */}
-              <Panel className="p-4" minSize={30} defaultSize={50}>
-                <div
-                  className="feedback-box"
-                  style={{
-                    maxHeight: "625px",
-                    maxWidth: "700px",
-                    overflowY: "auto",
-                  }}
-                >
-                  <h2>Feedback</h2>
-                  {loading ? (
-                    <div className="loading">Generating feedback...</div>
-                  ) : (
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                      {displayedFeedback}
-                    </ReactMarkdown>
-                  )}
-                </div>
-              </Panel>
-            </PanelGroup>
-
-            {/* Bottom PanelGroup */}
-            <PanelGroup direction="horizontal">
-              {/* Left Panel: Student Writing */}
-              <Panel
-                className="p-4"
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignSelf: "stretch",
-                }}
-              >
-                <h2 className="text-lg font-semibold mb-2">Student Writing</h2>
-                <div style={{ flexGrow: 1 }}>
-                  <SlateEditor
-                    value={editorValue}
-                    onChange={setEditorValue}
-                    errorList={errorList}
-                    onHoverError={setHoveredErrorId}
-                    hoveredErrorId={hoveredErrorId}
-                  />
-                </div>
-              </Panel>
-
-              {/* Resize Handle */}
-              <PanelResizeHandle className="w-1 bg-gray-200 cursor-col-resize" />
-
-              {/* Right Panel: Improvements */}
-              <Panel
-                className="p-4"
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignSelf: "stretch",
-                }}
-              >
-                <h2 className="text-lg font-semibold mb-2">Improvements</h2>
-                <div
-                  className="improvement-box"
-                  style={{
-                    border: "1px solid #ccc",
-                    padding: "10px",
-                    fontFamily: "monospace",
-                    whiteSpace: "pre-wrap",
-                    wordWrap: "break-word",
-                    flexGrow: 1,
-                  }}
-                >
-                  {errorList.map((error) => (
-                    <div
-                      key={error.id}
-                      style={{
-                        backgroundColor:
-                          hoveredErrorId === error.id ? "yellow" : "transparent",
-                      }}
-                      onMouseEnter={() => setHoveredErrorId(error.id)}
-                      onMouseLeave={() => setHoveredErrorId(null)}
-                    >
-                      {error.improvementText}
+      <div className="flex flex-col h-screen overflow-hidden">
+        <main className="flex-grow overflow-hidden" style={{ minHeight: 0 }}>
+          <div className="flex flex-col flex-grow space-y-4">
+            {/* Container 2: Learning Outcome and Marking Criteria */}
+            <div className="container-2 w-full mb-5 border border-gray-400 p-4 rounded-lg">
+              <Accordion type="single" collapsible>
+                {/* Learning Outcome Accordion */}
+                <AccordionItem value="learning-outcome">
+                  <AccordionTrigger
+                    style={{ borderBottom: "2px solid #a1a5ab" }}
+                  >
+                    Learning Outcome, Marking Criteria and Additional Prompt
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <textarea
+                      value={learningOutcome}
+                      readOnly
+                      rows={5}
+                      className="textarea w-full p-2 border border-gray-200 rounded"
+                      placeholder="Enter learning outcomes here..."
+                    />
+                    <textarea
+                      value={markingCriteria}
+                      readOnly
+                      rows={6}
+                      className="textarea w-full p-2 border border-gray-300 rounded"
+                      placeholder="Enter marking criteria here..."
+                    />
+                    {/* Updated Additional Prompt Display */}
+                    <div className="additional-prompt-page read-only">
+                      {renderMentions(additionalPrompt)}
                     </div>
-                  ))}
-                </div>
-              </Panel>
-            </PanelGroup>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+            </div>
 
-            {/* Submit Button */}
-            <div className="text-center">
-              <button
-                onClick={handleSubmit}
-                className="submit-button px-4 py-2 bg-blue-500 text-white rounded"
-              >
-                Get Feedback
-              </button>
+            {/* Container 3: Student Writing and Feedback side by side */}
+            <div className="flex flex-grow overflow-hidden">
+              <PanelGroup direction="horizontal" className="flex flex-grow">
+                {/* Left Panel: Student Writing */}
+                <Panel
+                  className="p-4 flex flex-col flex-grow overflow-hidden"
+                  style={{ minHeight: 0 }}
+                >
+                  <div
+                    style={{
+                      flexGrow: 1,
+                      overflowY: "auto",
+                      minHeight: 0,
+                    }}
+                  >
+                    <h2 className="text-lg">Student Writing</h2>
+                    {/* Use the SlateEditor */}
+                    <SlateEditor
+                      ref={slateEditorRef}
+                      value={editorValue}
+                      onChange={setEditorValue}
+                      errorList={errorList}
+                      errorsUpdated={errorsUpdated}
+                      setErrorsUpdated={setErrorsUpdated}
+                      updateErrorPositions={updateErrorPositions}
+                      hoveredErrorIdRef={hoveredErrorIdRef}
+                      hoverEventEmitter={hoverEventEmitter}
+                      onContentHeightChange={setEditorContentHeight}
+                    />
+                  </div>
+                  {/* Submit Button below Student Writing */}
+                  <div className="mt-4">
+                    <button
+                      className="btn"
+                      onClick={handleSubmit}
+                      disabled={loading}
+                    >
+                      Get Feedback
+                    </button>
+                  </div>
+                </Panel>
+
+                {/* Resize Handle */}
+                <PanelResizeHandle className="w-1 bg-gray-200 cursor-col-resize" />
+
+                {/* Right Panel: Feedback and Additional Feedback */}
+                <Panel
+                  className="p-4 flex flex-col flex-grow overflow-hidden"
+                  style={{ minHeight: 0 }}
+                >
+                  <h2 className="text-lg">Improvements</h2>
+                  {/* Improvements Section */}
+                  <Improvements
+                    ref={improvementsRef}
+                    errorList={errorList}
+                    hoveredErrorIdRef={hoveredErrorIdRef}
+                    hoverEventEmitter={hoverEventEmitter}
+                    editorContentHeight={editorContentHeight}
+                  />
+                  {/* Additional Feedback section */}
+                  <div
+                    className="flex-grow"
+                    style={{ maxHeight: "100px" }}
+                  >
+                    <div className="feedback-box">
+                      {loading ? (
+                        <div className="loading">
+                          Generating feedback...
+                        </div>
+                      ) : (
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                          {displayedFeedback
+                            .replace(
+                              "Areas of Improvement: ",
+                              "**Areas of Improvement:**"
+                            )
+                            .replace(
+                              "Areas of Improvement: \n\n",
+                              "**Areas of Improvement:**"
+                            )}
+                        </ReactMarkdown>
+                      )}
+                    </div>
+                  </div>
+                </Panel>
+              </PanelGroup>
             </div>
           </div>
         </main>
